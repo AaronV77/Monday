@@ -9,8 +9,8 @@
 argument=""
 current_directory=$(pwd)
 found_switch="not_found"
-ip_address=
-username=
+ip_address=None
+username=""
 
 # Remove the beginning slash of an incoming directory if it has it.
 # - Have to do this because the find name option will spit out a warning
@@ -25,13 +25,12 @@ fi
 # Concatenate the current working directory with the incoming argument 
 # - to get the full absolute path. 
 absolute_path="$current_directory/$argument"
-
 if [ -d $absolute_path ] || [ -f $absolute_path ];
 then
     {
         tar -czvf transfer.tar.gz $argument
         scp transfer.tar.gz $username@$ip_address:~/Transfer
-        rm trnasfer.tar.gz
+        rm transfer.tar.gz
     } &> /dev/null
 else 
     echo "File / Directory could not be found on Client..."

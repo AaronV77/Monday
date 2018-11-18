@@ -8,8 +8,8 @@
 #--------------------------------------------------------------------*/
 argument=""
 current_directory=$(pwd)
-ip_address=
-username=
+ip_address=None
+username=""
 
 # This will be a place to put all the files to transfer from the server.
 if ! [ -d ~/Transfer ];
