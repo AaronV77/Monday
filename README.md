@@ -1,4 +1,4 @@
-# Thursday
+# Monday
 
 Monday? What is Monday you are asking? Monday is a package of scripts in order to push and pull from a cental storage location. A little background. I have always used GitHub repo's as a central means of storing anything that I wanted to share among my other computers. No More! I had extra computer hardware laying around to setup a simple server to recieve ssh communication (port 22), and created these scripts to mimic the workings of git pull and git push. Now all you have to do is type push "file or directory" or pull "file or directory. Simple huh?
 
