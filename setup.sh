@@ -14,9 +14,12 @@ username="None"
 if ! [ -d ~/.ssh ];
 then
     mkdir ~/.ssh
+    mkdir ~/.ssh/sockets
 fi
 
-cd ~/
+cd ~/.ssh
+printf "Host *\n    ControlMaster auto\n    ControlPath ~/.ssh/ssh_mux_%h_%p_%r" > config
+
 ssh-keygen -t rsa
 mv id_rsa server_id_rsa
 mv id_rsa.pub server_id_rsa.pub
@@ -95,3 +98,6 @@ fi
 #   - https://askubuntu.com/questions/521937/write-function-in-one-line-into-bashrc
 #   - https://stackoverflow.com/questions/3327013/how-to-determine-the-current-shell-im-working-on
 #   - https://www.digitalocean.com/community/tutorials/how-to-configure-ssh-key-based-authentication-on-a-linux-server
+#   - https://stackoverflow.com/questions/20410252/how-to-reuse-an-ssh-connection
+#   - https://discussions.apple.com/thread/7826165
+#   - https://eddmann.com/posts/transferring-files-using-ssh-and-scp/
