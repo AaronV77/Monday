@@ -7,22 +7,33 @@
 #Email: valoroso99@gmail.com
 #--------------------------------------------------------------------*/
 argument=""
+argument_size=""
 error_switch=0
+test_switch=0
 current_directory=$(pwd)
 ip_address=None
 username=""
 
-if [ -n $2 ];
-then
-    if [ "$2" == "-error=on" ];
-    then
+storage_location="Documents/storage"
+compression="tar -czf"
+decompression="tar -xzf"
+found_switch="not_found"
+
+# Check the incoming parameters to see if either testing or printing errors
+# - needs to be turned on.
+i=0
+for i in "$@"; do
+    if [ $i == "-error" ]; then
         error_switch=1;
+        compression="tar -czvf"
+        decompression="tar -xzvf"
+    elif [ $i == "-test" ]; then
+        test_switch=1;
     fi
-fi
+done
 
 # This will be a place to put all the files to transfer from the server.
-if ! [ -d ~/Transfer ];
-then
+if ! [ -d ~/Transfer ]; then
     mkdir ~/Transfer
 fi
 
@@ -40,63 +51,33 @@ then
     argument=${argument::-1}
 fi
 
-# The following section is going to create a file with the passed in name
-# - of the file / directory, then scp it over to the server to look for,
-# - and then lastly just clean up the file since we don't need it anymore.
-echo "Step-1: Transfering initial file."
-cd ~/Transfer
-touch $argument
-scp $argument $username@$ip_address:~/Transfer > output.txt
-rm $argument
-if [ $error_switch == 1 ];
-then
-    sed -i 's/^/\t\t/' output.txt
-    cat output.txt
+if [ $test_switch -eq 0 ]; then
+    echo "Step-1: Locating File on server."
 fi
-rm output.txt
-echo "Finished."
-
-# If the ending argument looks like 'EOSSH'
-    # You can save variables within ssh.
-    # You can use the find and ls commands.
-# If the ending argument looks like EOSSH:
-    # Tou can't look into any directorys or use the find command.
-    # You can pass arguments declared outside of this ssh.
-
-# This is the main guts of this project and make sure that you understand
-# - what I'm trying to say above, because it can get annoying and the cause 
-# - of a lot of head aches. Fist I ssh into the server and I want to save 
-# - all output which should only be the absolute path to the file or directory
-# - that I want to download to the client. Another important detail is to
-# - make sure that you have a directory "Transfer" in your home directory!
-# - THIS IS IMPORTANT. List of the following lines
-#       - Chagne to that directory.
-#       - Save the output of ls to a variable.
-#       - Remove the only file in the directory.
-#       - Find the location in the storage server for the file or directory.
-#       - There should only be one location in the server with the file name to
-#           - download, and if there is more than one or none then print an error.
-echo "Step-2: Locating File on server."
-ssh $username@$ip_address -T > ~/Transfer/transfer.txt << 'EOSSH'
+ssh $username@$ip_address -T > ~/Transfer/transfer.txt << EOSSH
 
     cd ~/Transfer
 
-    looking_for=$(ls)
-    rm $looking_for
+    array=(\$(find \$HOME/$storage_location -name "$argument"))
+    len=\${#array[*]}
 
-    array=(`find ~/Documents/storage -name "$looking_for"`) 
-    len=${#array[*]}
-
-    if [ $len == 0 ];
-    then
-        echo "There were no files found with that given name..."
-        echo ""
-    elif [ $len -ge 2 ];
-    then
-        echo "There were more than one file found with that name..."
-        echo ""
+    if [ \$len == 0 ]; then
+        if [ $test_switch -eq 0 ]; then
+            echo "There were no files found with that given name..."
+            echo ""
+        fi
+        echo "1"
+    elif [ \$len -ge 2 ]; then
+        if [ $test_switch -eq 0 ]; then
+            echo "There were more than one file found with that name..."
+            echo ""
+        fi
+        echo "1"
     else
-        echo ${array[0]}
+        echo \${array[0]}
+        lines=\$(find \${array[0]} | wc -l)
+        echo \$lines
+        echo ""
     fi
 
     exit
@@ -109,22 +90,26 @@ EOSSH
 # - removing the last part of the path so that I have the absoute path of where
 # - the file or directory is to download when I do the sftp. 
 cd ~/Transfer
-to_download=$(tail -1 transfer.txt)
-
-if [ -z "$to_download" -a "$to_download" != " " ];
-then
-    echo "ERROR: There was an issue retrieving the file (MISSING)."
+error=$(tail -1 transfer.txt)
+if [ "$error" == '1' ]; then
+    if [ $test_switch -eq 0 ]; then
+        echo "ERROR: There was an issue retrieving the file."
+        echo "$path_to_download"
+    fi
+    tail -2 transfer.txt
+    rm transfer.txt
+    cd $current_directory
+    if [ -d ~/Transfer ]; then
+        rm -rf ~/Transfer
+    fi
     exit
 fi
-
-path_to_download=${to_download%/*}
-echo "Finished."
-
-if [ $error_switch == 1 ];
-then
-    cat transfer.txt
-fi
+path_to_download=$(tail -3 transfer.txt | head -1)
+number_of_lines=$(tail -2 transfer.txt | head -1)
 rm transfer.txt
+if [ $test_switch -eq 0 ]; then 
+    echo "Finished."
+fi
 
 # Need to do SFTP because there is no way to transfer files from the server
 # - back to the client. In order for the server to be able to scp files back
@@ -133,19 +118,38 @@ rm transfer.txt
 # - So, this is the easiest way to do it from the client side. Lastly, I had
 # - to break path up so that when I did the get command, I didn't get the warning
 # - that the name didn't need to have a slash in it..
-echo "Step-3: Pulling File"
-sftp $username@$ip_address -T > output.txt 2>&1 << EOSSH
-    cd $path_to_download
-    get -r $argument
-EOSSH
+if [ $test_switch -eq 0 ]; then
+    echo "Step-2: Pulling File"
+fi
 
-if [ $error_switch == 1 ];
-then
+scp -r $username@$ip_address:$path_to_download . > output.txt
+
+if [ $error_switch == 1 ]; then
     sed -i 's/^/\t\t/' output.txt
     cat output.txt
 fi
+
 rm output.txt
-echo "Finished."
+
+if [ $test_switch -eq 0 ]; then 
+    echo "Finished."
+fi
+
+number_of_lines_2=$(find $argument | wc -l)
+if [ $number_of_lines != $number_of_lines_2 ]; then
+    if [ $test_switch -eq 0 ]; then 
+        echo "Not everything made it over from the dark side."
+    else
+        echo 1
+    fi
+    rm -rf *
+    cd $current_directory
+    echo 1
+    if [ -d ~/Transfer ]; then
+        rm -rf ~/Transfer
+    fi
+    exit
+fi
 
 # Try and find the file that is getting added to the client computer to see if 
 # - it is already in the file system. Now I have the starting point in /home, 
@@ -155,23 +159,23 @@ echo "Finished."
 array=(`find /home -name "$argument"`)
 len=${#array[*]}
 
-# There will only be one location that the file will be and thats in ~/Transfer
-# - to be moved to the current directory.
-
 # If the find command has found the file or directory (once) on the file system then it
-# - has found the one that got sftp to the Transfer directory. If the find command
+# - has found the one that got scp to the Transfer directory. If the find command
 # - has found the file or directory (twice) on the file system then it has found it in
 # - the Transfer directory and the location that the user is looking to swap out for the 
 # - one on the server. I then do some clean up and get rid of the file, and move it to
 # - the location that the user is looking to replace.
-if [ $len == 1 ];
-then
-    echo "Step-4: Adding File / Directory to local collection..." 
+if [ $len == 1 ]; then
+    if [ $test_switch -eq 0 ]; then 
+        echo "Step-3: Adding File / Directory to local collection..." 
+        echo "Finished."
+    fi
     mv $argument $current_directory
-    echo "Finished."
-elif [ $len == 2 ];
-then
-    echo "Step-4: Replacing File / Directory to collection..."
+elif [ $len == 2 ]; then
+    if [ $test_switch -eq 0 ]; then 
+         echo "Step-3: Replacing File / Directory to collection..."
+         echo "Finished."
+    fi
     absolute_path=${array[1]%/*}
     if [ -d ${array[1]} ]; then
         rm -rf ${array[1]}
@@ -180,22 +184,26 @@ then
         rm ${array[1]}
         mv $argument $absolute_path
     fi
-    rm -rf *
-    echo "Finished."
 else
-    echo "ERROR: There were more than one file found with that name..."
-    rm -rf *
+    if [ $test_switch -eq 0 ]; then 
+        echo "ERROR: There were more than one file found with that name..."
+    else
+        echo 1
+    fi
 fi
+rm -rf *
 
 # Put the user back into their current directory that they were working from.
 cd $current_directory
 
 # Clean up our transfer directory from the client.
-if [ -d ~/Transfer ];
-then
+if [ -d ~/Transfer ]; then
     rm -rf ~/Transfer
 fi
 
+if [ $test_switch -eq 1 ]; then 
+    echo 0
+fi
 # Useful URL's:
 #   - https://www.digitalocean.com/community/tutorials/how-to-use-sftp-to-securely-transfer-files-with-a-remote-server
 #   - https://www.tutorialspoint.com/unix/unix-basic-operators.htm
