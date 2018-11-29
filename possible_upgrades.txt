@@ -1,3 +1,0 @@
-1. For the push command, have the ability to put in a special place.
-2. Have the ability for either command to be able to take multiple arguments.
-3. Allow parameters to the setup.sh script so that only parts have will run.

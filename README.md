@@ -16,12 +16,15 @@ Since these are shell scripts please make sure to always check any shell scripts
 
 ## Prerequisites
 
-The only prerequisites is that you need to use the Bash bourne shell in order to be able to call the scripts from any where. I have not supported the other shells yet and have only gotten this package to work with Bash.
+The only prerequisites is that you need to use the Bash bourne shell in order to be able to call the scripts from any where. I have not supported the other shells yet and have only gotten this package to work with Bash. Lastly, your clients and server have to be some type of Linux Distro.
 
 ## Installing
 
 Just run the setup.sh script in the directory. I have not tested this script fully, so please just follow the commands by hand. Once done you can then use the commands push and pull with an argument.
 
+## Testing
+
+There is a test script included into the source for checking if your installation is working or if any changes that you have implemented are working. You will have to run it in the following manner: "source ./test.sh". Now I don't know if every shell supports the command "source" so again these scripts will only work in bash as of right now.
 
 # Author: Aaron A. Valoroso
 

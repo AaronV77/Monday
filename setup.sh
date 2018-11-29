@@ -9,6 +9,7 @@
 
 ip_address="None"
 username="None"
+current_directory=$(pwd)
 
 # Setup the ssh keys 
 if ! [ -d ~/.ssh ];
@@ -67,13 +68,13 @@ then
     if [ -f .bashrc ]
     then
         echo "" >> .bashrc
-        echo "push () { bash /home/valorosoa/Documents/GitHub/Personal/Monday/push.sh \$@ ; }" >> .bashrc
-        echo "pull () { bash /home/valorosoa/Documents/GitHub/Personal/Monday/pull.sh \$@ ; }" >> .bashrc
+        echo "push () { bash "$current_directory"/push.sh \$@ ; }" >> .bashrc
+        echo "pull () { bash "$current_directory"/home/valorosoa/pull.sh \$@ ; }" >> .bashrc
         source .bashrc
     else
         echo "" >> .bash_profile
-        echo "push () { bash /home/valorosoa/Documents/GitHub/Personal/Monday/push.sh \$@ ; }" >> .bash_profile
-        echo "pull () { bash /home/valorosoa/Documents/GitHub/Personal/Monday/pull.sh \$@ ; }" >> .bash_profile
+        echo "push () { bash "$current_directory"/push.sh \$@ ; }" >> .bash_profile
+        echo "pull () { bash "$current_directory"/pull.sh \$@ ; }" >> .bash_profile
         source .bash_profile
     fi
 elif [ $SHELL == "csh" ];
