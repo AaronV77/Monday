@@ -2,9 +2,9 @@
 
 Monday? What is Monday you are asking? Monday is a package of scripts in order to push and pull from a cental storage location. A little background. I have always used GitHub repo's as a central means of storing anything that I wanted to share among my other computers. No More! I had extra computer hardware laying around to setup a simple server to recieve ssh communication (port 22), and created these scripts to mimic the workings of git pull and git push. Now all you have to do is type push "file or directory" or pull "file or directory. Simple huh?
 
-The two main scripts that I have took some black magic to pull off, but I have provided a lot of comments to explain what I did and why I did. There is also a fair bit of setup that you have to do in each script, such as username, ip_address, and storage location on your server. These are important or this whole process will not work at all. So, please read through all the scripts so that they make sense to you and are setup correctly, or you will get unexpected results.
+The two main scripts that I have took some black magic to pull off, but I have provided a lot of comments to explain what I did and why I did it. There is also a fair bit of setup that you have to do in each script, such as username, ip_address, storage location on your server, and router setup. These are important or this whole process will not work at all. So, please read through all the scripts so that they make sense to you and are setup correctly, or you will get unexpected results.
 
-A couple last little details to mention before I go. First, I am no daily scripter, so if you see anything that could be done differently then by all means I take any comments or PR's. Second, it would be super helpful if you setup your ssh keys before trying to get this package to work between your client and server. There are at least three password entries needed for each script, and that can get rather annoying. Third, there are some weird workings in bash that when I created my function in order to call push or pull, the scritps would not work if I did not have bash /path/to/file, but they are shell scripts not bash. So, ya I don't know. Lastly, I hope you enjoy my package scripts here, and that you contribute if you find a better way of doing things. Thanks~!
+A couple last little details to mention before I go. First, I am no daily scripter, so if you see anything that could be done differently, then by all means I'll take any comments or PR's. Second, it would be super helpful if you setup your ssh keys before trying to get this package to work between your client and server. There are two password entries needed for each script, and ten for the tests. So, all that typing can get rather annoying. Lastly, I hope you enjoy my package of scripts here, and that you contribute if you find a better way of doing things. Thanks~!
 
 ## Getting Started
 
@@ -24,7 +24,11 @@ Just run the setup.sh script in the directory. I have not tested this script ful
 
 ## Testing
 
-There is a test script included into the source for checking if your installation is working or if any changes that you have implemented are working. You will have to run it in the following manner: "source ./test.sh". Now I don't know if every shell supports the command "source" so again these scripts will only work in bash as of right now.
+There is a test script included into the source for checking if your installation is working or if any changes that you have implemented are working. You will have to run it in the following manner: "source ./test.sh". Now I don't know if every shell supports the command "source" so again these scripts will only work in bash as of right now. Add more tests if you see anything that I am missing.
+
+## Contributing
+
+Like I've said in the previous sections I hope that people get to use these scripts and contribute. Before submitting a PR, I've written a script call credential scan to remove any credentials that you could be stored in the scripts. There is a specific thing that the script is looking for so don't go stashing your IP address or Username anywhere else than needed. This will save a lot of hassel.. trust me, so run the script. 
 
 # Author: Aaron A. Valoroso
 

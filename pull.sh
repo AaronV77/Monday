@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #/*-------------------------------------------------------------------
 #Author: Aaron Anthony Valoroso
@@ -159,7 +159,7 @@ fi
 # - because you will get permission warnings if you dig through the root directories.
 # - You can change this but just keep in mind that this search will take a little bit
 # - longer to search through.
-array=(`find /home -name "$argument"`)
+array=($(find /home -name "$argument"))
 len=${#array[*]}
 
 # If the find command has found the file or directory (once) on the file system then it

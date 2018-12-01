@@ -1,4 +1,4 @@
-#/bin/sh
+#/bin/bash
 
 #/*-------------------------------------------------------------------
 #Author: Aaron Anthony Valoroso
@@ -7,8 +7,8 @@
 #Email: valoroso99@gmail.com
 #--------------------------------------------------------------------*/
 
-ip_address="None"
-username="None"
+ip_address=None
+username=""
 current_directory=$(pwd)
 
 # Setup the ssh keys 
