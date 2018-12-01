@@ -1,7 +1,7 @@
 #!/bin/sh
 
-ip_address=162.216.200.16
-username="valorosoa"
+ip_address=None
+username=""
 storage_location="/home/valorosoa/Documents/storage"
 
 mkdir Monday_Testing
@@ -23,13 +23,13 @@ results=$(push monday_testing -test)
 ssh -T $username@$ip_address > output.txt << EOF
     outcome=\$(find \$HOME/Transfer | wc -l)
     if [ \$outcome -gt 1 ]; then
-        echo 1
+        echo "1"
     else 
-        echo 0
+        echo "0"
     fi
 EOF
 outcome=$(cat output.txt)
-if [ "$results" == '0' ] || [ "$outcome" == '0' ]; then
+if [ "$results" == "0" ] || [ "$outcome" == "0" ]; then
     echo "PASSED"
 else
     echo "FAILED"
@@ -42,9 +42,9 @@ results=$(push monday_testing -test=on)
 ssh -T $username@$ip_address > output.txt << EOF
     outcome=\$(find \$HOME/Transfer | wc -l)
     if [ \$outcome -gt 1 ]; then
-        echo 1
+        echo "1"
     else 
-        echo 0
+        echo "0"
     fi
 EOF
 outcome=$(cat output.txt)
@@ -75,9 +75,9 @@ results=$(push monday_testing -test)
 ssh -T $username@$ip_address > output.txt << EOF
     outcome=\$(find \$HOME/Transfer | wc -l)
     if [ \$outcome -gt 1 ]; then
-        echo 1
+        echo "1"
     else 
-        echo 0
+        echo "0"
     fi
 EOF
 outcome=$(cat output.txt)
@@ -95,9 +95,9 @@ results=$(push monday_test.txt -test)
 ssh -T $username@$ip_address > output.txt << EOF
     outcome=\$(find \$HOME/Transfer | wc -l)
     if [ \$outcome -gt 1 ]; then
-        echo 1
+        echo "1"
     else 
-        echo 0
+        echo "0"
     fi
 EOF
 outcome=$(cat output.txt)

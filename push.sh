@@ -21,27 +21,36 @@ found_switch="not_found"
 
 # Check the incoming parameters to see if either testing or printing errors
 # - needs to be turned on.
-i=0
-for i in "$@"; do
-    if [ $i == "-error" ]; then
+argument=$1
+while test $# -gt 0; do
+    if [ "$1" = "-error" ]; then
         error_switch=1;
         compression="tar -czvf"
         decompression="tar -xzvf"
-    elif [ $i == "-test" ]; then
+    elif [ "$1" = "-test" ]; then
         test_switch=1;
     fi
+    shift
 done
 
 # Remove the beginning and end slash of an incoming directory if it has it.
 # - Have to do this because the find name option will spit out a warning
 # - if I do not remove the slash.
-argument=$1
-if [ ${argument:0:1} == '/' ]; then
-    argument="${argument:1}"
-fi
+if [ ! -z "$argument" ] || [ "$argument" != "" ]; then
+    if [ "${argument:0:1}" = '/' ]; then
+        argument="${argument:1}"
+    fi
 
-if [ ${argument: -1} == '/' ]; then
-    argument=${argument::-1}
+    if [ "${argument: -1}" = '/' ]; then
+        argument=${argument::-1}
+    fi
+else
+    if [ $test_switch -eq 0 ]; then
+        echo "File / Directory could not be found on Client..."
+    else
+        echo "1"
+    fi
+    exit
 fi
 
 # Concatenate the current working directory with the incoming argument to 
@@ -63,7 +72,7 @@ if [ -d $absolute_path ] || [ -f $absolute_path ]; then
         rm transfer.tar.gz
     } > output.txt
 
-    if [ $error_switch == 1 ]; then
+    if [ $error_switch = 1 ]; then
         sed -i 's/^/\t\t/' output.txt
         cat output.txt
     fi
@@ -75,7 +84,7 @@ else
     if [ $test_switch -eq 0 ]; then
         echo "File / Directory could not be found on Client..."
     else
-        echo 1
+        echo "1"
     fi
     exit
 fi
@@ -102,7 +111,7 @@ fi
 ssh $username@$ip_address -T > output.txt << EOSSH
 
     cd ~/Transfer
-    decompression="$decompression transfer.tar.gz"
+    decompression="$decompression transfer.tar.gz -m"
     eval \$decompression
     rm transfer.tar.gz
     argument=\$(ls)
@@ -113,13 +122,13 @@ ssh $username@$ip_address -T > output.txt << EOSSH
         argument_size_2=\$(find "\$argument" | wc -l)
     fi
     
-    if [ \$argument_size_2 != $argument_size ]; then
+    if [ "\$argument_size_2" != "$argument_size" ]; then
         if [ $test_switch -eq 0 ]; then
             echo \$argument_size_2
             echo $argument_size
             echo "Not everything made it over to the darkside."
         else
-            echo 1
+            echo "1"
         fi
         rm -rf *
         exit
@@ -142,7 +151,7 @@ ssh $username@$ip_address -T > output.txt << EOSSH
         fi
         
         echo "There is more than one File / Directory that have the same name..."
-        echo 1
+        echo "1"
 
         exit
     else
@@ -166,14 +175,14 @@ EOSSH
 # - I want to print everything out from the previous section of code, else then I just want
 # - to print the one line from the heredoc that was printed. In the first part of that if 
 # - statment, I am adding a tab to every line in the output file and printing the contents.
-if [ $error_switch == 1 ];
+if [ $error_switch = 1 ];
 then
     sed -i 's/^/\t\t/' output.txt
     cat output.txt
 else 
     output=$(tail -1 output.txt)
-    if [ "$output" == "1" ]; then
-        echo 1
+    if [ "$output" = "1" ]; then
+        echo "1"
         exit
     fi
 
@@ -186,7 +195,7 @@ rm output.txt
 if [ $test_switch -eq 0 ]; then 
     echo "Finished."
 else
-    echo 0
+    echo "0"
 fi
 
 

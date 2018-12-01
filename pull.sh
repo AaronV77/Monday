@@ -15,40 +15,43 @@ ip_address=None
 username=""
 
 storage_location="Documents/storage"
-compression="tar -czf"
-decompression="tar -xzf"
 found_switch="not_found"
 
 # Check the incoming parameters to see if either testing or printing errors
 # - needs to be turned on.
-i=0
-for i in "$@"; do
-    if [ $i == "-error" ]; then
+argument=$1
+while test $# -gt 0; do
+    if [ "$1" = "-error" ]; then
         error_switch=1;
-        compression="tar -czvf"
-        decompression="tar -xzvf"
-    elif [ $i == "-test" ]; then
+    elif [ "$1" = "-test" ]; then
         test_switch=1;
     fi
+    shift
 done
-
-# This will be a place to put all the files to transfer from the server.
-if ! [ -d ~/Transfer ]; then
-    mkdir ~/Transfer
-fi
 
 # Remove the beginning and end slash of an incoming directory if it has it.
 # - Have to do this because the find name option will spit out a warning
 # - if I do not remove the slash.
-argument=$1
-if [ ${argument:0:1} == '/' ];
-then
-    argument="${argument:1}"
+if [ ! -z "$argument" ] || [ "$argument" != "" ]; then
+    if [ "${argument:0:1}" = '/' ]; then
+        argument="${argument:1}"
+    fi
+
+    if [ "${argument: -1}" = '/' ]; then
+        argument=${argument::-1}
+    fi
+else
+    if [ $test_switch -eq 0 ]; then
+        echo "File / Directory could not be found on Client..."
+    else
+        echo "1"
+    fi
+    exit
 fi
 
-if [ ${argument: -1} == '/' ];
-then
-    argument=${argument::-1}
+# This will be a place to put all the files to transfer from the server.
+if ! [ -d ~/Transfer ]; then
+    mkdir ~/Transfer
 fi
 
 if [ $test_switch -eq 0 ]; then
@@ -140,7 +143,7 @@ if [ $number_of_lines != $number_of_lines_2 ]; then
     if [ $test_switch -eq 0 ]; then 
         echo "Not everything made it over from the dark side."
     else
-        echo 1
+        echo "1"
     fi
     rm -rf *
     cd $current_directory
@@ -188,7 +191,7 @@ else
     if [ $test_switch -eq 0 ]; then 
         echo "ERROR: There were more than one file found with that name..."
     else
-        echo 1
+        echo "1"
     fi
 fi
 rm -rf *
