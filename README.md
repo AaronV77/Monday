@@ -12,15 +12,15 @@ Just follow the upcoming sections they should make startup very clear.
 
 ## Warnings
 
-Since these are shell scripts please make sure to always check any shell scripts that you are going to run on your system! Also every machine is setup differently and I would hate for these scripts to overwrite any precious keys or any other information. Lastly, I have not fully tested the setup.sh script to make sure that it works as expected, and so use this file with hesitation.
+Since these are bash scripts, please make sure to always check any scripts that you are going to run on your system! Also every machine is setup differently and I would hate for these scripts to overwrite any precious keys or any other information. So please, make sure to understand how these scripts are working and what they are doing. There is enough documentation in the files to make the learning transition faster. Lastly, I have not fully tested the setup.sh script to make sure that it works as expected, and so use this file with hesitation.
 
 ## Prerequisites
 
-The only prerequisites is that you need to use the Bash bourne shell in order to be able to call the scripts from any where. I have not supported the other shells yet and have only gotten this package to work with Bash. Lastly, your clients and server have to be some type of Linux Distro.
+The only prerequisites is that you need to use the Bash shell on your system in order to be able to call the scripts from any where. I have not supported the other shells yet and have only gotten this package to work with Bash. Lastly, your clients and server have to be some type of Linux Distro and they do not have to be of the same distro.
 
 ## Installing
 
-Just run the setup.sh script in the directory. I have not tested this script fully, so please just follow the commands by hand. Once done you can then use the commands push and pull with an argument.
+Just run the setup.sh script in the directory. I have not tested this script fully, so please just follow the commands by hand. Once that last step is done you can then use the commands push and pull with an argument.
 
 ## Testing
 
