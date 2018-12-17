@@ -1,11 +1,33 @@
 #!/bin/bash
 
+#/*-------------------------------------------------------------------
+#Author: Aaron Anthony Valoroso
+#Date: December 17th, 2018
+#License: GNU GENERAL PUBLIC LICENSE
+#Email: valoroso99@gmail.com
+#--------------------------------------------------------------------*/
 ip_address=""
 username=""
 path_location=""
 current_location=$(pwd)
 
 read -p "Enter Full Path Location: " path_location
+
+# Remove the beginning and end slash of an incoming directory if it has it.
+# - Have to do this because the find name option will spit out a warning
+# - if I do not remove the slash.
+if [ ! -z "$path_location" ] || [ "$path_location" != "" ]; then
+    if [ ! "${path_location:0:1}" = '/' ]; then
+        path_location="/$path_location"
+    fi
+
+    if [ "${path_location: -1}" = '/' ]; then
+        path_location="${path_location::-1}"
+    fi
+else
+    echo "There was an issue with the path location given..."
+    exit
+fi
 
 pull_location="$path_location/pull.sh"
 push_location="$path_location/push.sh"

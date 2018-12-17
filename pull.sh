@@ -1,8 +1,8 @@
 #!/bin/bash
-
+Aaron
 #/*-------------------------------------------------------------------
 #Author: Aaron Anthony Valoroso
-#Date: November 14th, 2018
+#Date: December 17th, 2018
 #License: GNU GENERAL PUBLIC LICENSE
 #Email: valoroso99@gmail.com
 #--------------------------------------------------------------------*/
@@ -45,7 +45,7 @@ if [ ! -z "$argument" ] || [ "$argument" != "" ]; then
     fi
 else
     if [ $test_switch -eq 0 ]; then
-        echo "File / Directory could not be found on Client..."
+        echo "There was an issue with the argument given..."
     else
         echo "1"
     fi
