@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 #/*-------------------------------------------------------------------
 #Author: Aaron Anthony Valoroso
@@ -12,24 +12,30 @@ username=""
 current_directory=$(pwd)
 
 # Setup the ssh keys 
-if ! [ -d ~/.ssh ];
-then
-    mkdir ~/.ssh
-    mkdir ~/.ssh/sockets
+if [ ! -d ~/.ssh ]; then
+    mkdir $HOME/.ssh
+    mkdir $HOME/.ssh/sockets
+elif [ ! -d $HOME/.ssh/sockets ]; then
+    mkdir $HOME/.ssh/sockets
 fi
 
-cd ~/.ssh
-printf "Host *\n    ControlMaster auto\n    ControlPath ~/.ssh/ssh_mux_%h_%p_%r" > config
+cd $HOME/.ssh
+printf "Host *\n    ControlMaster auto\n    ControlPath ~/.ssh/ssh_mux_%h_%p_%r" >> config
+
+mkdir temp
+cd temp
 
 ssh-keygen -t rsa
 mv id_rsa server_id_rsa
 mv id_rsa.pub server_id_rsa.pub
-mv server_id_rsa ~/.ssh
-mv server_id_rsa.pub ~/.ssh
+mv server_id_rsa ../
+mv server_id_rsa.pub ../
+
+cd ..
+rm -rf temp
 
 echo "Host $ip_address\nIdentityFile ~/.ssh/server_key.pub" >> config
 
-cd ~/.ssh
 key=$(cat server_id_rsa.pub)
 
 # Setup the server
