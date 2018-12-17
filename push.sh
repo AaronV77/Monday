@@ -13,7 +13,6 @@ test_switch=0
 current_directory=$(pwd)
 ip_address=None
 username=""
-
 storage_location="Documents/storage"
 compression="tar -czf"
 decompression="tar -xzf"
