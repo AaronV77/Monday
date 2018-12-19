@@ -1,5 +1,5 @@
 #!/bin/bash
-Aaron
+
 #/*-------------------------------------------------------------------
 #Author: Aaron Anthony Valoroso
 #Date: December 17th, 2018
