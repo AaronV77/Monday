@@ -45,10 +45,12 @@ if [ $push_switch -eq 1 ]; then
     echo "Testing adding a directory w/ files."
     results=$(push monday_testing -test)
     ssh -T $username@$ip_address > output.txt << EOF
-        outcome=\$(find \$HOME/Transfer | wc -l)
+        outcome=\$(find \$HOME -type d -name monday_testing | wc -l)
         if [ \$outcome -gt 1 ]; then
             echo "1"
         else 
+            cd ~/$storage_location
+            rm -rf monday_testing
             echo "0"
         fi
 EOF
@@ -58,17 +60,28 @@ EOF
         echo "PASSED"
     else
         echo "FAILED"
+        echo "--------------------------------------------------"
+        push monday_testing -error
+        echo "----------------------------"
+        curr_dir=$(pwd)
+        echo "Current Path: $curr_dir"
+        echo "----------------------------"
+        curr_dir=$(ls)
+        echo "Current Directory Contents: "
+        echo "--------------------------------------------------"
     fi
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Testing replacing a directory w/ an added file."
-    touch monday_testing/example_2.txt
+    touch monday_testing/example_2222.txt
     results=$(push monday_testing -test=on)
     ssh -T $username@$ip_address > output.txt << EOF
-        outcome=\$(find \$HOME/Transfer | wc -l)
+        outcome=\$(find \$HOME -type f -name example_2222.txt | wc -l)
         if [ \$outcome -gt 1 ]; then
             echo "1"
         else 
+            cd ~/$storage_location
+            rm -rf monday_testing
             echo "0"
         fi
 EOF
@@ -78,7 +91,17 @@ EOF
         echo "PASSED"
     else
         echo "FAILED"
+        echo "--------------------------------------------------"
+        push monday_testing -error
+        echo "----------------------------"
+        curr_dir=$(pwd)
+        echo "Current Path: $curr_dir"
+        echo "----------------------------"
+        curr_dir=$(ls)
+        echo "Current Directory Contents: "
+        echo "--------------------------------------------------"
     fi
+    rm -rf monday_testing
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Testing adding a directory with more than one location."
@@ -93,27 +116,15 @@ EOF
         echo "PASSED"
     else
         echo "FAILED"
-    fi
-    echo "------------------"
-    #---------------------------------------------------------------------------------
-    echo "Testing adding an empty directory."
-    rm monday_testing/*
-    results=$(push monday_testing -test)
-    ssh -T $username@$ip_address > output.txt << EOF
-        outcome=\$(find \$HOME/Transfer | wc -l)
-        if [ \$outcome -gt 1 ]; then
-            echo "1"
-        else 
-            echo "0"
-        fi
-EOF
-
-    rm -rf monday_testing
-    outcome=$(cat output.txt)
-    if [ "$results" == '0' ] || [ "$outcome" == '0' ]; then
-        echo "PASSED"
-    else
-        echo "FAILED"
+        echo "--------------------------------------------------"
+        push monday_testing -error
+        echo "----------------------------"
+        curr_dir=$(pwd)
+        echo "Current Path: $curr_dir"
+        echo "----------------------------"
+        curr_dir=$(ls)
+        echo "Current Directory Contents: "
+        echo "--------------------------------------------------"
     fi
     echo "------------------"
     #---------------------------------------------------------------------------------
@@ -121,10 +132,12 @@ EOF
     touch monday_test.txt
     results=$(push monday_test.txt -test)
     ssh -T $username@$ip_address > output.txt << EOF
-        outcome=\$(find \$HOME/Transfer | wc -l)
+        outcome=\$(find \$HOME -type f -name monday_test.txt | wc -l)
         if [ \$outcome -gt 1 ]; then
             echo "1"
         else 
+            cd ~/$storage_location
+            rm monday_test.txt
             echo "0"
         fi
 EOF
@@ -134,6 +147,15 @@ EOF
         echo "PASSED"
     else
         echo "FAILED"
+        echo "--------------------------------------------------"
+        push monday_test.txt -error
+        echo "----------------------------"
+        curr_dir=$(pwd)
+        echo "Current Path: $curr_dir"
+        echo "----------------------------"
+        curr_dir=$(ls)
+        echo "Current Directory Contents: "
+        echo "--------------------------------------------------"
     fi
     rm monday_test.txt
     echo "------------------"
@@ -141,11 +163,19 @@ EOF
     echo "Testing adding two folders at once."
     results=$(push test-1 test2 -test)
     ssh -T $username@$ip_address > output.txt << EOF
-        outcome=\$(find \$HOME/Transfer | wc -l)
+        outcome=\$(find \$HOME -type d -name test-1 | wc -l)
         if [ \$outcome -gt 1 ]; then
             echo "1"
         else 
-            echo "0"
+            cd ~/$storage_location
+            rm -rf test-1
+            outcome=\$(find \$HOME -type d -name test-1 | wc -l)
+            if [ \$outcome -gt 1 ]; then
+                echo "1"
+            else
+                rm -rf test-2
+                echo "0"
+            fi
         fi
 EOF
 
@@ -154,18 +184,24 @@ EOF
         echo "PASSED"
     else
         echo "FAILED"
+        echo "--------------------------------------------------"
+        push test-1 test2 -error
+        echo "----------------------------"
+        curr_dir=$(pwd)
+        echo "Current Path: $curr_dir"
+        echo "----------------------------"
+        curr_dir=$(ls)
+        echo "Current Directory Contents: "
+        echo "--------------------------------------------------"
     fi
     echo "------------------"    
     #---------------------------------------------------------------------------------
     echo "Cleaning Up the Push tests."
     ssh -T $username@$ip_address > output.txt << EOF
         cd \$HOME/$storage_location
-        rm -rf second_testing test-1 test-2
-        rm monday_test.txt
+        rm -rf second_testing
 EOF
-
     rm -rf ~/Monday_Testing/*
-
     #---------------------------------------------------------------------------------
     echo "------------------------------"
     if [ $pull_switch -eq 1 ]; then
@@ -195,6 +231,15 @@ EOF
         echo "PASSED"
     else
         echo "FAILED"
+        echo "--------------------------------------------------"
+        pull monday_testing_1 -error
+        echo "----------------------------"
+        curr_dir=$(pwd)
+        echo "Current Path: $curr_dir"
+        echo "----------------------------"
+        curr_dir=$(ls)
+        echo "Current Directory Contents: "
+        echo "--------------------------------------------------"
     fi
     rm -rf monday_testing_1
     echo "------------------"
@@ -206,6 +251,15 @@ EOF
         echo "PASSED"
     else
         echo "FAILED"
+        echo "--------------------------------------------------"
+        pull monday_testing_2 -error
+        echo "----------------------------"
+        curr_dir=$(pwd)
+        echo "Current Path: $curr_dir"
+        echo "----------------------------"
+        curr_dir=$(ls)
+        echo "Current Directory Contents: "
+        echo "--------------------------------------------------"
     fi
     rm -rf monday_testing_2
     echo "------------------"
@@ -217,6 +271,15 @@ EOF
         echo "PASSED"
     else
         echo "FAILED"
+        echo "--------------------------------------------------"
+        pull the_test_file.txt -error
+        echo "----------------------------"
+        curr_dir=$(pwd)
+        echo "Current Path: $curr_dir"
+        echo "----------------------------"
+        curr_dir=$(ls)
+        echo "Current Directory Contents: "
+        echo "--------------------------------------------------"
     fi
     echo "------------------"
     #---------------------------------------------------------------------------------
@@ -231,6 +294,15 @@ EOF
     second_stamp=$(stat --printf=%y the_test_file.txt | cut -d. -f1)
     if [ "$first_stamp" == "$second_stamp" ]; then
         echo "FAILED"
+        echo "--------------------------------------------------"
+        pull the_test_file.txt -error
+        echo "----------------------------"
+        curr_dir=$(pwd)
+        echo "Current Path: $curr_dir"
+        echo "----------------------------"
+        curr_dir=$(ls)
+        echo "Current Directory Contents: "
+        echo "--------------------------------------------------"
     else
         echo "PASSED"
     fi
@@ -248,6 +320,15 @@ EOF
         echo "PASSED"
     else
         echo "FAILED"
+        echo "--------------------------------------------------"
+        push the_test_file.txt -error
+        echo "----------------------------"
+        curr_dir=$(pwd)
+        echo "Current Path: $curr_dir"
+        echo "----------------------------"
+        curr_dir=$(ls)
+        echo "Current Directory Contents: "
+        echo "--------------------------------------------------"
     fi  
     rm output.txt
     echo "------------------"
@@ -259,6 +340,15 @@ EOF
         echo "PASSED"
     else
         echo "FAILED"
+        echo "--------------------------------------------------"
+        pull monday_testing_1 monday_testing_2 -error
+        echo "----------------------------"
+        curr_dir=$(pwd)
+        echo "Current Path: $curr_dir"
+        echo "----------------------------"
+        curr_dir=$(ls)
+        echo "Current Directory Contents: "
+        echo "--------------------------------------------------"
     fi
     rm -rf monday_testing_1
     rm -rf monday_testing_2
