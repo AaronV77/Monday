@@ -36,6 +36,8 @@ if [ $push_switch -eq 1 ]; then
     mkdir monday_testing
     touch monday_testing/example_1.txt
     touch monday_testing/example_2.txt
+    mkdir test-1
+    mkdir test-2
     echo "------------------------------"
     echo "Testing - Push.sh"
     echo "------------------"
@@ -50,6 +52,7 @@ if [ $push_switch -eq 1 ]; then
             echo "0"
         fi
 EOF
+
     outcome=$(cat output.txt)
     if [ "$results" == "0" ] || [ "$outcome" == "0" ]; then
         echo "PASSED"
@@ -69,6 +72,7 @@ EOF
             echo "0"
         fi
 EOF
+
     outcome=$(cat output.txt)
     if [ "$results" == '0' ] || [ "$outcome" == '0' ]; then
         echo "PASSED"
@@ -83,6 +87,7 @@ EOF
         mkdir second_testing
         mkdir second_testing/monday_testing
 EOF
+
     results=$(push monday_testing -test)
     if [ "$results" == '1' ]; then 
         echo "PASSED"
@@ -103,6 +108,7 @@ EOF
         fi
 EOF
 
+    rm -rf monday_testing
     outcome=$(cat output.txt)
     if [ "$results" == '0' ] || [ "$outcome" == '0' ]; then
         echo "PASSED"
@@ -112,7 +118,6 @@ EOF
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Testing adding a just a file."
-    rm -rf monday_testing
     touch monday_test.txt
     results=$(push monday_test.txt -test)
     ssh -T $username@$ip_address > output.txt << EOF
@@ -130,17 +135,37 @@ EOF
     else
         echo "FAILED"
     fi
+    rm monday_test.txt
     echo "------------------"
+    #---------------------------------------------------------------------------------
+    echo "Testing adding two folders at once."
+    results=$(push test-1 test2 -test)
+    ssh -T $username@$ip_address > output.txt << EOF
+        outcome=\$(find \$HOME/Transfer | wc -l)
+        if [ \$outcome -gt 1 ]; then
+            echo "1"
+        else 
+            echo "0"
+        fi
+EOF
+
+    outcome=$(cat output.txt)
+    if [ "$results" == '0' ] || [ "$outcome" == '0' ]; then
+        echo "PASSED"
+    else
+        echo "FAILED"
+    fi
+    echo "------------------"    
     #---------------------------------------------------------------------------------
     echo "Cleaning Up the Push tests."
     ssh -T $username@$ip_address > output.txt << EOF
         cd \$HOME/$storage_location
-        rm -rf monday_testing
-        rm -rf second_testing
+        rm -rf second_testing test-1 test-2
         rm monday_test.txt
 EOF
-    rm output.txt
-    rm monday_test.txt
+
+    rm -rf ~/Monday_Testing/*
+
     #---------------------------------------------------------------------------------
     echo "------------------------------"
     if [ $pull_switch -eq 1 ]; then
@@ -158,6 +183,7 @@ if [ $pull_switch -eq 1 ]; then
         mkdir monday_testing_2
         touch the_test_file.txt
 EOF
+
     echo "------------------------------"
     echo "Testing - Pull.sh"
     echo "------------------"
@@ -170,7 +196,7 @@ EOF
     else
         echo "FAILED"
     fi
-    rm -rf *
+    rm -rf monday_testing_1
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Pulling an empty directory."
@@ -181,7 +207,7 @@ EOF
     else
         echo "FAILED"
     fi
-    rm -rf *
+    rm -rf monday_testing_2
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Pulling a file."
@@ -200,6 +226,7 @@ EOF
     ssh -T $username@$ip_address << EOF
         echo "This is something extra" > \$HOME/$storage_location/the_test_file.txt
 EOF
+
     outcome=$(pull the_test_file.txt -test)
     second_stamp=$(stat --printf=%y the_test_file.txt | cut -d. -f1)
     if [ "$first_stamp" == "$second_stamp" ]; then
@@ -207,6 +234,7 @@ EOF
     else
         echo "PASSED"
     fi
+    rm the_test_file.txt
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Pulling a file that is on the server twice."
@@ -214,14 +242,27 @@ EOF
         cd \$HOME/$storage_location
         touch monday_testing_2/the_test_file.txt
 EOF
+
     outcome=$(pull the_test_file.txt -test)
     if [ "$outcome" == 1 ]; then
         echo "PASSED"
     else
         echo "FAILED"
-    fi
+    fi  
+    rm output.txt
     echo "------------------"
-
+    #---------------------------------------------------------------------------------
+    echo "Pulling two folders."
+    outcome=$(pull monday_testing_1 monday_testing_2 -test)
+    directory_contents=$(ls | wc -l)
+    if [ "$directory_contents" == "2" ]; then
+        echo "PASSED"
+    else
+        echo "FAILED"
+    fi
+    rm -rf monday_testing_1
+    rm -rf monday_testing_2
+    echo "------------------"    
     #---------------------------------------------------------------------------------
     echo "Cleaning Up the Pull tests."
     ssh -T $username@$ip_address > output.txt << EOF
