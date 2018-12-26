@@ -6,58 +6,75 @@
 #License: GNU GENERAL PUBLIC LICENSE
 #Email: valoroso99@gmail.com
 #--------------------------------------------------------------------*/
+cleanup () {
+    if [ -f error_output.txt ]; then
+        echo -e "\tHere is what caused the error: "
+        sed -i 's/^/\t/' error_output.txt
+        sed -i 's/^/\t/' error_output.txt
+        cat error_output.txt
+        rm error_output.txt
+    fi
+    echo -e "\tCleaning up...."
+    echo "Exiting..."
+    cd $current_directory || cd $HOME
+    exit
+}
+trap cleanup 1 2 3 6
+#--------------------------------------------------------------------
 incoming_items=()
 error_switch=0
-test_switch=0
 current_directory=$(pwd)
 ip_address=None
 username=""
 storage_location="Documents/storage"
 compression="tar -czf"
 decompression="tar -xzf"
-found_switch="not_found"
-
-# Check the incoming parameters to see if either testing or printing errors
-# - needs to be turned on, and collect everything else that is not a parameter.
+#--------------------------------------------------------------------
+# Check the incoming parameters such as items to pull from the server or
+# - the error switch. The error switch will help provide extra output from
+# - the compression and decompression of the items. Everything besides the 
+# - error switch is going to be checked for emptiness and NULL. The error
+# - switch is the only parameter that should have '-' in front of it, every
+# - thing else will be ignored. Then lastly, I check for the ending and
+# - beginning forward slash. The beginning slash needs to be there (so added) 
+# - and the last forward slash (removed) does not need to be there. It
+# - will be added to the array.
 while test $# -gt 0; do
     if [ "$1" = "-error" ]; then
         error_switch=1
         compression="tar -czvf"
         decompression="tar -xzvf"
-    elif [ "$1" = "-test" ]; then
-        test_switch=1;
     else
-        incoming_items+=("$1")
+        argument=$1
+        if [ ! -z "$argument" ] || [ "$argument" != "" ]; then
+            if [ "${argument:0:1}" = '-' ]; then
+                echo "There was a problem with the following argument: $argument"
+                echo "Moving forward."
+            else
+                if [ "${argument:0:1}" = '/' ]; then
+                    argument="${argument:1}"
+                fi
+
+                if [ "${argument: -1}" = '/' ]; then
+                    argument=${argument::-1}
+                fi
+
+                incoming_items+=("$argument")
+            fi
+        else
+            echo "There was a problem with the following argument: $argument"
+            echo "Moving forward."
+        fi
     fi
     shift
 done
 
 for argument in "${incoming_items[@]}"
 do
-    if [ $test_switch -eq 0 ]; then
-        echo "--------------------"
-        echo "Pushing: $argument"
-        echo "--------------------"
-    fi
-    # Remove the beginning and end slash of an incoming directory if it has it.
-    # - Have to do this because the find name option will spit out a warning
-    # - if I do not remove the slash.
-    if [ ! -z "$argument" ] || [ "$argument" != "" ]; then
-        if [ "${argument:0:1}" = '/' ]; then
-            argument="${argument:1}"
-        fi
-
-        if [ "${argument: -1}" = '/' ]; then
-            argument=${argument::-1}
-        fi
-    else
-        if [ $test_switch -eq 0 ]; then
-            echo "There was an issue with the argument given..."
-        else
-            echo "1"
-        fi
-        exit
-    fi
+    echo "--------------------"
+    echo "Pushing: $argument"
+    echo "--------------------"
+    echo "Step-1: Packaging items and Transfering to server."
 
     # Concatenate the current working directory with the incoming argument to 
     # - get the full absolute path. Then check to make sure that the incoming
@@ -65,170 +82,124 @@ do
     # - the number of files / folders of the argument, and will compress the 
     # - incoming argument and transfer it to the server. If there was an error, 
     # - print all of the output.
-    if [ $test_switch -eq 0 ]; then
-        echo "Step-1: Packaging items and Transfering to server."
-    fi
     absolute_path="$current_directory/$argument"
     if [ -d $absolute_path ] || [ -f $absolute_path ]; then
-        {
-            argument_size=$(find $argument | wc -l)
-            compression_command="$compression transfer.tar.gz $argument"
-            eval $compression_command
-            scp transfer.tar.gz $username@$ip_address:~/Transfer
-            rm transfer.tar.gz
-        } > output.txt
 
-        if [ $error_switch = 1 ]; then
-            sed -i 's/^/\t\t/' output.txt
-            cat output.txt
-        fi
+        argument_size=$(find $HOME -name $argument | wc -l)
+        if ! $compression transfer.tar.gz $argument 2> error_output.txt ; then cleanup; fi
+        if ! scp transfer.tar.gz $username@$ip_address:~/Transfer 2> error_output.txt 1> output.txt; then cleanup; fi
+        if ! rm transfer.tar.gz 2> error_output.txt ; then cleanup; fi
 
         if [ -f output.txt ]; then
+            sed -i 's/^/\t/' output.txt
+            if [ $error_switch -eq 1 ]; then
+                cat output.txt
+            fi
             rm output.txt
         fi
 
-        if [ $test_switch -eq 0 ]; then
-            echo "Finished."
-        fi
-    else 
-        if [ $test_switch -eq 0 ]; then
-            echo "File / Directory could not be found on Client..."
-        else
-            echo "1"
-        fi
-
-        if [ -f output.txt ]; then
-            rm output.txt
-        fi
-
-        exit
-    fi
-
-    # This is the main guts of this script. In the first line I am sshing into 
-    # - my server, disabling the banner of ssh, and saving all output to a file to
-    # - be printed to terminal later. After that, I am using a heredoc to allow me
-    # - to write all the commands in this fashion. If I didn't use a heredoc, I would
-    # - not be able to use if statments. Next, I switch to our Transfer folder on the
-    # - server to decompress the file that we sent over, remove the packaged file, and 
-    # - then take the only file, and save the name to a variable. Next, I want to make 
-    # - sure that every file made it to the remote server, else print an error. Next, I 
-    # - want to make sure that the file / folder that we sent over is any where on the 
-    # - server. If there is no matching items then add, if there is one matching item then 
-    # - replace, and if there is more than one item then print error statment. How I
-    # - replace items in the server is just remove the item from where it lies, and then
-    # - move the new item in its exact same place. Lastly, some minor details to point
-    # - out is that all the variables created inside of the heredoc need to have a \ 
-    # - in front of them and all outside variables of the heredoc do not. The reason is
-    # - to break the parsing from local to remote in the ssh parsing of the heredoc.
-    if [ $test_switch -eq 0 ]; then
+        echo "Finished."
         echo "Step-2: Replacing items in server."
+    else 
+        echo "File / Directory could not be found on Client..." 1> error_output.txt
+        cleanup
     fi
-    ssh $username@$ip_address -T > output.txt << EOSSH
 
-        cd ~/Transfer
-
-        decompression="$decompression transfer.tar.gz -m"
-        eval \$decompression
-        rm transfer.tar.gz
+    # This is the main guts of this script. In the first section of this heredoc I create
+    # - a cleanup function that has a different than the previous cleanup function. This function
+    # - will help clean up any time a command fails or a trap has been called. Then the next section
+    # - we will move to the Transfer directory and decompress the packaged item, and then remove the
+    # - archive file. Next, I will get the contents of the directory which should only be the one 
+    # - file or folder, which I will then look for in the storage directory. The next section I make
+    # - sure that everything had made it over to the server and if not then cleanup. The next section
+    # - there are only three possible outcomes; the first is that the argument to be replace has only
+    # - been found zero times (which is an error), greater than two times (which is an error), and then
+    # - lastly only two occurences were found. In this if statment I make sure which element in the array
+    # - to remove and the absolute path to replace with. Lastly, then some clean up.
+    ssh $username@$ip_address -T 1> output.txt << EOSSH
+        cleanup2 () {
+            if [ -f error_output.txt ]; then
+                cat error_output.txt
+                rm error_output.txt
+            fi
+            if [ -d \$HOME/Transfer ]; then
+                rm -rf \$HOME/Transfer/*
+            fi
+            echo "Exiting..."
+            exit
+        }
+        trap cleanup 1 2 3 6
+        if ! cd ~/Transfer 2> $HOME/Transfer/error_output.txt ; then cleanup2; fi
+        if ! $decompression transfer.tar.gz -m 2> error_output.txt ; then cleanup2; fi
+        if ! rm transfer.tar.gz 2> error_output.txt ; then cleanup2; fi
+        
+        if [ -f error_output.txt ]; then
+            rm error_output.txt
+        fi
         argument=\$(ls)
 
-        if [ -d "\$argument" ]; then
-            argument_size_2=\$(find "\$argument/" | wc -l)
-        elif [ -f "\$argument" ]; then
-            argument_size_2=\$(find "\$argument" | wc -l)
-        fi
+        argument_size_2=\$(find \$HOME/Transfer -name "\$argument" | wc -l)
         
         if [ "\$argument_size_2" != "$argument_size" ]; then
-            if [ $test_switch -eq 0 ]; then
-                echo "Not everything made it over to the darkside."
-            else
-                echo "1"
-            fi
-
-            rm -rf ~/Transfer/*
-
-            exit
+            echo "Argument-1: $argument_size" 1> error_output.txt
+            echo "Argument-2: \$argument_size_2" 1>> error_output.txt
+            echo "Not everything made it over to the darkside." 1>> error_output.txt
+            cleanup2
         fi
 
         array=(\$(find \$HOME/$storage_location -name "\$argument"))
         len=\${#array[*]}
-        
         if [ \$len = 0 ]; then
-            if [ $test_switch -eq 0 ]; then
-                echo "Adding File / Directory to collection..."
-            fi
-            mv \$argument ~/Documents/storage
+            echo "Adding File / Directory to collection..."
+            if ! mv \$argument ~/Documents/storage 2> error_output.txt ; then cleanup2; fi
         elif [ \$len -ge 2 ]; then
+            echo "There is more than one File / Directory that have the same name..." 1> error_output.txt
+            cleanup2
+        elif [ \$len -eq 2 ]; then
+            echo "Replacing File / Directory to collection..."
 
-            if [[ -d \${array[0]} ]]; then
-                rm -rf \${array[0]}
-            elif [[ -f \${array[0]} ]]; then
-                rm \${array[0]}
-            fi
-            
-            echo "There is more than one File / Directory that have the same name..."
-            echo "1"
-
-            exit
-        else
-            if [ $test_switch -eq 0 ]; then
-                echo "Replacing File / Directory to collection..."
+            search="$current_directory/$argument"
+            if [ \$search == \${array[0]} ]; then
+                destroy=\${array[1]}
+            elif [ $search == ${array[1]} ]; then
+                destroy=\${array[0]} 
             fi
 
-            if [[ -d \${array[0]} ]]; then
-                rm -rf \${array[0]}
-            elif [[ -f \${array[0]} ]]; then
-                rm \${array[0]}
+            absolute_path=$(echo $destroy | sed 's|\(.*\)/.*|\1|')
+            if [ -d \$destroy ]; then
+                rm -rf \$destroy
+            elif [ -f \$destroy ]; then
+                rm \$destroy
             fi
-            mv \$argument \${array[0]}
+            mv \$argument \$absolute_path
         fi
 
         rm -rf ~/Transfer/*
 
         exit
 EOSSH
-
-    # This section of code is to make sure that the user gets good feed back and understands
-    # - what is happening in the heredoc. If the error parameter eas passed to the system then
-    # - I want to print everything out from the previous section of code, else then I just want
-    # - to print the one line from the heredoc that was printed. In the first part of that if 
-    # - statment, I am adding a tab to every line in the output file and printing the contents.
-    if [ $error_switch = 1 ];
-    then
-        sed -i 's/^/\t\t/' output.txt
-        cat output.txt
-    else 
-        if [ $test_switch -eq 1 ]; then
-            output=$(tail -1 output.txt)
-            if [ "$output" = "1" ]; then
-                echo "1"
-                if [ -f output.txt ]; then
-                    rm output.txt
-                fi
-                exit
-            fi
-        else 
-            echo -e "\t $output"
+    # Here we will check to see if the previous code ran into an error. If it did
+    # - Then print an error message, remove the "Exiting..." from the end of the file
+    # - and if the output.txt file is there then remove it. Lastly, we will call the 
+    # - cleanup to exit the script, then print the "Finished." message and 
+    # - remove the output.txt file if it exists.
+    error=$(tail -1 output.txt)
+    if [ "$error" == 'Exiting...' ]; then
+        echo "Found errors in the heredoc..."
+        head -n -1 output.txt 1> error_output.txt
+        if [ -f output.txt ]; then
+            rm output.txt
         fi
+        cleanup
     fi
 
+    echo "Finished."
     if [ -f output.txt ]; then
         rm output.txt
     fi
-
-    if [ $test_switch -eq 0 ]; then 
-        echo "Finished."
-    fi
-
 done
 
-if [ $test_switch -eq 0 ]; then
-    echo "--------------------"
-fi
-
-if [ $test_switch -eq 1 ]; then
-    echo "0"
-fi
+echo "--------------------"
 
 # Useful URL's:
 #   - https://www.tutorialspoint.com/unix/unix-basic-operators.htm
