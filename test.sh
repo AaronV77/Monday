@@ -1,11 +1,73 @@
 #!/bin/bash
 
-#/*-------------------------------------------------------------------
+#--------------------------------------------------------------------
 #Author: Aaron Anthony Valoroso
 #Date: December 17th, 2018
 #License: GNU GENERAL PUBLIC LICENSE
 #Email: valoroso99@gmail.com
-#--------------------------------------------------------------------*/
+#--------------------------------------------------------------------
+# General Explanation:
+# The following file is for testing monday and it should be pretty self explanatory. There
+# - are two functions; one is cleanup and the other is for when tests fail. Next, I setup 
+# - the variables for the script, setup the directory to do the testing in, and then process
+# - the incoming parameters. There are to major testing suites and they are the pull and push.
+# - Each one can run independently and cleanup. I'm not going to go through each test itself
+# - becauce I think the name above each test should explana what it is doing. Lastly, the
+# - testing directory is deleted and act like nothing every happened.
+#--------------------------------------------------------------------
+test_failure() {
+
+    sed -i 's/^/\t/' the_output.txt
+    cat the_output.txt
+    echo -e "\t----------------------------"
+    curr_dir=$(pwd)
+    echo -e "\tCurrent Path: $curr_dir"
+    echo -e "\t----------------------------"
+    echo -e "\tCurrent Directory Contents: "
+    ls 1> the_output.txt
+    sed -i 's/^/\t/' the_output.txt
+    cat the_output.txt        
+    echo -e "\t----------------------------"
+    rm the_output.txt
+
+}
+#--------------------------------------------------------------------
+clenaup () {
+    cd $HOME
+    if [ -d $HOME/Transfer ]; then
+        rm -rf $HOME/Transfer
+    fi
+
+    if [ -d $HOME/Monday_Testing ]; then
+        rm -rf $HOME/Monday_Testing
+    fi
+
+    ssh $username@$ip_address -T << EOF
+        rm -rf \$HOME/Transfer/*
+        cd $storage_location
+        if [ -d monday_testing ]; then
+            rm -rf monday_testing
+        fi
+        if [ -d monday_testing_1 ]; then
+            rm -rf monday_testing_1
+        fi
+        if [ -d monday_testing_2 ]; then
+            rm -rf monday_testing_2
+        fi
+        if [ -d test-1 ]; then
+            rm -rf test-1
+        fi
+        if [ -d test-2 ]; then
+            rm -rf test-2
+        fi
+        if [ -f the_test_file.txt ]; then
+            rm the_test_file.txt
+        fi
+        exit
+EOF
+}
+trap cleanup 1 2 3 6 
+#--------------------------------------------------------------------
 ip_address=None
 username=""
 storage_location="Documents/storage"
@@ -43,8 +105,10 @@ if [ $push_switch -eq 1 ]; then
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Testing adding a directory w/ files."
-    results=$(push monday_testing -test)
-    ssh -T $username@$ip_address > output.txt << EOF
+    push monday_testing 1> test_output.txt
+    results=$(cat test_output.txt | tail -2 | head -1)
+    rm test_output.txt
+    ssh $username@$ip_address -T 1> the_output.txt << EOF
         outcome=\$(find \$HOME -type d -name monday_testing | wc -l)
         if [ \$outcome -gt 1 ]; then
             echo "1"
@@ -55,27 +119,24 @@ if [ $push_switch -eq 1 ]; then
         fi
 EOF
 
-    outcome=$(cat output.txt)
-    if [ "$results" == "0" ] || [ "$outcome" == "0" ]; then
+    outcome=$(cat the_output.txt)
+    rm the_output.txt
+    if [ "$results" == "Finished." ] || [ "$outcome" == "0" ]; then
         echo "PASSED"
     else
         echo "FAILED"
-        echo "--------------------------------------------------"
-        push monday_testing -error
-        echo "----------------------------"
-        curr_dir=$(pwd)
-        echo "Current Path: $curr_dir"
-        echo "----------------------------"
-        curr_dir=$(ls)
-        echo "Current Directory Contents: "
-        echo "--------------------------------------------------"
+        echo -e "\n\t----------------------------"
+        push monday_testing -error 1> the_output.txt
+        test_failure
     fi
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Testing replacing a directory w/ an added file."
     touch monday_testing/example_2222.txt
-    results=$(push monday_testing -test=on)
-    ssh -T $username@$ip_address > output.txt << EOF
+    push monday_testing 1> test_output.txt
+    results=$(cat test_output.txt | tail -2 | head -1)
+    rm test_output.txt
+    ssh $username@$ip_address -T 1> the_output.txt << EOF
         outcome=\$(find \$HOME -type f -name example_2222.txt | wc -l)
         if [ \$outcome -gt 1 ]; then
             echo "1"
@@ -86,83 +147,72 @@ EOF
         fi
 EOF
 
-    outcome=$(cat output.txt)
-    if [ "$results" == '0' ] || [ "$outcome" == '0' ]; then
+    outcome=$(cat the_output.txt)
+    rm the_output.txt
+    if [ "$results" == 'Finished.' ] || [ "$outcome" == '0' ]; then
         echo "PASSED"
     else
         echo "FAILED"
-        echo "--------------------------------------------------"
-        push monday_testing -error
-        echo "----------------------------"
-        curr_dir=$(pwd)
-        echo "Current Path: $curr_dir"
-        echo "----------------------------"
-        curr_dir=$(ls)
-        echo "Current Directory Contents: "
-        echo "--------------------------------------------------"
+        echo -e "\n\t----------------------------"
+        push monday_testing -error 1> the_output.txt
+        test_failure
     fi
-    rm -rf monday_testing
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Testing adding a directory with more than one location."
-    ssh -T $username@$ip_address > output.txt << EOF
+    ssh $username@$ip_address -T << EOF
         cd \$HOME/$storage_location
         mkdir second_testing
         mkdir second_testing/monday_testing
 EOF
 
-    results=$(push monday_testing -test)
-    if [ "$results" == '1' ]; then 
+    push monday_testing 1> test_output.txt
+    results=$(cat test_output.txt | tail -2 | head -1)
+    rm test_output.txt
+    if [ "$results" == 'Finished.' ]; then 
         echo "PASSED"
     else
         echo "FAILED"
-        echo "--------------------------------------------------"
-        push monday_testing -error
-        echo "----------------------------"
-        curr_dir=$(pwd)
-        echo "Current Path: $curr_dir"
-        echo "----------------------------"
-        curr_dir=$(ls)
-        echo "Current Directory Contents: "
-        echo "--------------------------------------------------"
+        echo -e "\n\t----------------------------"
+        push monday_testing -error 1> the_output.txt
+        test_failure
     fi
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Testing adding a just a file."
     touch monday_test.txt
-    results=$(push monday_test.txt -test)
-    ssh -T $username@$ip_address > output.txt << EOF
+    push monday_test.txt 1> test_output.txt
+    results=$(cat test_output.txt | tail -2 | head -1)
+    rm test_output.txt
+    ssh $username@$ip_address -T 1> the_output.txt << EOF
         outcome=\$(find \$HOME -type f -name monday_test.txt | wc -l)
         if [ \$outcome -gt 1 ]; then
             echo "1"
-        else 
+        elif [ \$outcome -eq 1 ]; then
+            ls
             cd ~/$storage_location
             rm monday_test.txt
             echo "0"
         fi
 EOF
-
-    outcome=$(cat output.txt)
-    if [ "$results" == '0' ] || [ "$outcome" == '0' ]; then
+    outcome=$(cat the_output.txt)
+    rm the_output.txt
+    if [ "$results" == 'Finished.' ] || [ "$outcome" == '0' ]; then
         echo "PASSED"
     else
         echo "FAILED"
-        echo "--------------------------------------------------"
-        push monday_test.txt -error
-        echo "----------------------------"
-        curr_dir=$(pwd)
-        echo "Current Path: $curr_dir"
-        echo "----------------------------"
-        curr_dir=$(ls)
-        echo "Current Directory Contents: "
-        echo "--------------------------------------------------"
+        echo -e "\n\t----------------------------"
+        push monday_test.txt -error 1> the_output.txt
+        test_failure
     fi
     rm monday_test.txt
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Testing adding two folders at once."
-    results=$(push test-1 test2 -test)
-    ssh -T $username@$ip_address > output.txt << EOF
+    push test-1 test2 1> test_output.txt
+    results=$(cat test_output.txt | tail -2 | head -1)
+    rm test_output.txt
+    ssh -T $username@$ip_address 1> the_output.txt << EOF
         outcome=\$(find \$HOME -type d -name test-1 | wc -l)
         if [ \$outcome -gt 1 ]; then
             echo "1"
@@ -179,25 +229,20 @@ EOF
         fi
 EOF
 
-    outcome=$(cat output.txt)
-    if [ "$results" == '0' ] || [ "$outcome" == '0' ]; then
+    outcome=$(cat the_output.txt)
+    rm the_output.txt
+    if [ "$results" == 'Finished.' ] || [ "$outcome" == '0' ]; then
         echo "PASSED"
     else
         echo "FAILED"
-        echo "--------------------------------------------------"
-        push test-1 test2 -error
-        echo "----------------------------"
-        curr_dir=$(pwd)
-        echo "Current Path: $curr_dir"
-        echo "----------------------------"
-        curr_dir=$(ls)
-        echo "Current Directory Contents: "
-        echo "--------------------------------------------------"
+        echo -e "\n\t----------------------------"
+        push test-1 test2 -error 1> the_output.txt
+        test_failure
     fi
     echo "------------------"    
     #---------------------------------------------------------------------------------
     echo "Cleaning Up the Push tests."
-    ssh -T $username@$ip_address > output.txt << EOF
+    ssh $username@$ip_address -T << EOF
         cd \$HOME/$storage_location
         rm -rf second_testing
 EOF
@@ -225,61 +270,48 @@ EOF
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Pulling a directory with files."
-    outcome=$(pull monday_testing_1 -test)
+    pull monday_testing_1 1> the_output.txt
+    outcome=$(cat the_output.txt | tail -2 | head -1)
+    rm the_output.txt
     directory=$(ls)
-    if [ "$directory" == "monday_testing_1" ] && [ "$outcome" == '0' ]; then
+    if [ "$directory" == "monday_testing_1" ] && [ "$outcome" == 'Finished.' ]; then
         echo "PASSED"
     else
         echo "FAILED"
-        echo "--------------------------------------------------"
-        pull monday_testing_1 -error
-        echo "----------------------------"
-        curr_dir=$(pwd)
-        echo "Current Path: $curr_dir"
-        echo "----------------------------"
-        curr_dir=$(ls)
-        echo "Current Directory Contents: "
-        echo "--------------------------------------------------"
+        pull monday_testing_1 -error 1> the_output.txt
+        test_failure
     fi
     rm -rf monday_testing_1
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Pulling an empty directory."
-    outcome=$(pull monday_testing_2 -test)
+    pull monday_testing_2 1> the_output.txt
+    outcome=$(cat the_output.txt | tail -2 | head -1)
+    rm the_output.txt
     directory=$(ls)
-    if [ "$directory" == "monday_testing_2" ] && [ "$outcome" == 0 ]; then
+    if [ "$directory" == "monday_testing_2" ] && [ "$outcome" == 'Finished.' ]; then
         echo "PASSED"
     else
         echo "FAILED"
-        echo "--------------------------------------------------"
-        pull monday_testing_2 -error
-        echo "----------------------------"
-        curr_dir=$(pwd)
-        echo "Current Path: $curr_dir"
-        echo "----------------------------"
-        curr_dir=$(ls)
-        echo "Current Directory Contents: "
-        echo "--------------------------------------------------"
+        echo -e "\n\t----------------------------"
+        pull monday_testing_2 -error 1> the_output.txt
+        test_failure
     fi
     rm -rf monday_testing_2
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Pulling a file."
-    outcome=$(pull the_test_file.txt -test)
+    pull the_test_file.txt 1> the_output.txt
+    outcome=$(cat the_output.txt | tail -2 | head -1)
+    rm the_output.txt
     directory=$(ls)
-    if [ "$directory" == "the_test_file.txt" ] && [ "$outcome" == 0 ]; then
+    if [ "$directory" == "the_test_file.txt" ] && [ "$outcome" == 'Finished.' ]; then
         echo "PASSED"
     else
         echo "FAILED"
-        echo "--------------------------------------------------"
-        pull the_test_file.txt -error
-        echo "----------------------------"
-        curr_dir=$(pwd)
-        echo "Current Path: $curr_dir"
-        echo "----------------------------"
-        curr_dir=$(ls)
-        echo "Current Directory Contents: "
-        echo "--------------------------------------------------"
+        echo -e "\n\t----------------------------"
+        pull the_test_file.txt -error 1> the_output.txt
+        test_failure
     fi
     echo "------------------"
     #---------------------------------------------------------------------------------
@@ -287,22 +319,18 @@ EOF
     first_stamp=$(stat --printf=%y the_test_file.txt | cut -d. -f1)
     sleep 5
     ssh -T $username@$ip_address << EOF
-        echo "This is something extra" > \$HOME/$storage_location/the_test_file.txt
+        echo "This is something extra" 1> \$HOME/$storage_location/the_test_file.txt
 EOF
 
-    outcome=$(pull the_test_file.txt -test)
+    pull the_test_file.txt 1> the_output.txt
+    outcome=$(cat the_output.txt | tail -2 | head -1)
+    rm the_output.txt
     second_stamp=$(stat --printf=%y the_test_file.txt | cut -d. -f1)
-    if [ "$first_stamp" == "$second_stamp" ]; then
+    if [ "$first_stamp" == "$second_stamp" ] || [ "$outcome" != 'Finished.' ]; then
         echo "FAILED"
-        echo "--------------------------------------------------"
-        pull the_test_file.txt -error
-        echo "----------------------------"
-        curr_dir=$(pwd)
-        echo "Current Path: $curr_dir"
-        echo "----------------------------"
-        curr_dir=$(ls)
-        echo "Current Directory Contents: "
-        echo "--------------------------------------------------"
+        echo -e "\t----------------------------"
+        pull the_test_file.txt -error 1> the_output.txt
+        test_failure
     else
         echo "PASSED"
     fi
@@ -310,52 +338,42 @@ EOF
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Pulling a file that is on the server twice."
-    ssh -T $username@$ip_address > output.txt << EOF
+    ssh $username@$ip_address -T << EOF
         cd \$HOME/$storage_location
         touch monday_testing_2/the_test_file.txt
 EOF
-
-    outcome=$(pull the_test_file.txt -test)
-    if [ "$outcome" == 1 ]; then
+    pull the_test_file.txt 1> the_output.txt
+    outcome=$(cat the_output.txt | tail -1)
+    rm the_output.txt
+    if [ "$outcome" == 'Exiting...' ]; then
         echo "PASSED"
     else
         echo "FAILED"
-        echo "--------------------------------------------------"
-        push the_test_file.txt -error
-        echo "----------------------------"
-        curr_dir=$(pwd)
-        echo "Current Path: $curr_dir"
-        echo "----------------------------"
-        curr_dir=$(ls)
-        echo "Current Directory Contents: "
-        echo "--------------------------------------------------"
-    fi  
-    rm output.txt
+        echo -e "\t----------------------------"
+        pull the_test_file.txt -error 1> output.txt
+        test_failure
+    fi
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Pulling two folders."
-    outcome=$(pull monday_testing_1 monday_testing_2 -test)
+    pull monday_testing_1 monday_testing_2 -test 1> the_output.txt
+    outcome=$(cat the_output.txt | tail -2 | head -1)
+    rm the_output.txt
     directory_contents=$(ls | wc -l)
-    if [ "$directory_contents" == "2" ]; then
+    if [ "$directory_contents" == "2" ] && [ "$outcome" == "Finished." ]; then
         echo "PASSED"
     else
         echo "FAILED"
-        echo "--------------------------------------------------"
-        pull monday_testing_1 monday_testing_2 -error
-        echo "----------------------------"
-        curr_dir=$(pwd)
-        echo "Current Path: $curr_dir"
-        echo "----------------------------"
-        curr_dir=$(ls)
-        echo "Current Directory Contents: "
-        echo "--------------------------------------------------"
+        echo -e "\t----------------------------"
+        pull monday_testing_1 monday_testing_2 -error 1> the_output.txt
+        test_failure
     fi
     rm -rf monday_testing_1
     rm -rf monday_testing_2
     echo "------------------"    
     #---------------------------------------------------------------------------------
     echo "Cleaning Up the Pull tests."
-    ssh -T $username@$ip_address > output.txt << EOF
+    ssh $username@$ip_address -T << EOF
         cd \$HOME/$storage_location
         rm -rf monday_testing_1
         rm -rf monday_testing_2
