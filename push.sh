@@ -144,7 +144,7 @@ do
             exit
         }
         trap cleanup 1 2 3 6
-        if ! cd ~/Transfer 2> $HOME/Transfer/error_output.txt ; then cleanup2; fi
+        if ! cd \$HOME/Transfer 2> \$HOME/Transfer/error_output.txt ; then cleanup2; fi
         if ! $decompression transfer.tar.gz -m 2> error_output.txt ; then cleanup2; fi
         if ! rm transfer.tar.gz 2> error_output.txt ; then cleanup2; fi
         
@@ -173,7 +173,7 @@ do
         len=\${#array[*]}
         if [ \$len == 0 ]; then
             echo "Adding File / Directory to collection-1..."
-            if ! mv \$argument $HOME/Documents/storage 2> error_output.txt ; then cleanup2; fi
+            if ! mv \$argument \$HOME/Documents/storage 2> error_output.txt ; then cleanup2; fi
             if [ -f error_output.txt ]; then rm error_output.txt; fi
         elif [ \$len -ge 2 ]; then
             array=(\$(find \$HOME/$storage_location -type d -name "$top_directory"))
@@ -213,7 +213,7 @@ do
             if ! mv \$argument \$absolute_path 2> error_output.txt ; then cleanup2; fi
         fi
 
-        rm -rf ~/Transfer/*
+        rm -rf \$HOME/Transfer/*
 
         exit
 EOSSH

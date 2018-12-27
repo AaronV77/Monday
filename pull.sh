@@ -111,10 +111,10 @@ do
             exit
         }
         trap cleanup 1 2 3 6
-        if [ ! -d $HOME/Transfer ]; then
-            if ! mkdir $HOME/Transfer 2> $HOME/Transfer/error_output.txt ; then cleanup2; fi
+        if [ ! -d \$HOME/Transfer ]; then
+            if ! mkdir \$HOME/Transfer 2> \$HOME/Transfer/error_output.txt ; then cleanup2; fi
         fi 
-        if ! cd $HOME/Transfer 2> $HOME/Transfer/error_output.txt ; then cleanup2; fi 
+        if ! cd \$HOME/Transfer 2> \$HOME/Transfer/error_output.txt ; then cleanup2; fi 
 
         array=(\$(find \$HOME/$storage_location -name "$argument"))
         len=\${#array[*]}
@@ -125,7 +125,7 @@ do
             item=\${array[0]}
             item=$(echo \${item%/*})
             if ! cd \$item 2> error_output.txt ; then cleanup2; fi 
-            if ! $compression $HOME/Transfer/transfer.tar.gz $argument 2> error_output.txt ; then cleanup2; fi 
+            if ! $compression \$HOME/Transfer/transfer.tar.gz $argument 2> error_output.txt ; then cleanup2; fi 
             lines=\$(find "\${array[0]}" | wc -l)
             echo \$lines
         elif [ \$len -ge 2 ]; then
@@ -174,17 +174,18 @@ EOSSH
     # - to a file. I have to use scp because there is no other way to pull / push files
     # - to the client from the remote system. This format of the following line is to 
     # - check the validity of the command and if it fails then we run the cleanup.
-    if ! scp -r $username@$ip_address:"$HOME/Transfer/transfer.tar.gz" . 2> error_output.txt 1> output.txt ; then cleanup; fi 
+    if ! scp -r $username@$ip_address:"~/Transfer/transfer.tar.gz" . 2> error_output.txt 1> output.txt ; then cleanup; fi 
 
     # Decompress the file and then remove the archive file. These next two lines also 
     # - have the same format as the previous line, and if they fail then call the clean
     # - up function. We also store the output of the decompression command and if the 
     # - error switch is on, then print out the output.
     if ! $decompression transfer.tar.gz -m 2> error_output.txt 1> output.txt ; then cleanup; fi
-    if ! rm $HOME/Transfer/transfer.tar.gz 2> error_output.txt ; then cleanup; fi 
+    if ! rm transfer.tar.gz 2> error_output.txt ; then cleanup; fi 
 
     if [ $error_switch -eq 1 ]; then
         echo "Decompression output..."
+        sed -i 's/^/\t/' output.txt
         cat output.txt
         if [ ! -f output.txt ]; then
             rm output.txt
@@ -197,7 +198,7 @@ EOSSH
     # - server that we got does not match then there was an issue with the transfer. If 
     # - there is an issue and we are not running the test then pring an error message, 
     # - else print a 1. The one again signifies that there was an issue to the tests. Then
-    # - we make sure to change back to the home directory and remove the Transfer directory.\
+    # - we make sure to change back to the home directory and remove the Transfer directory.
     argument_size_2=$(find $argument | wc -l)
     if [ $argument_size != $argument_size_2 ]; then
         echo "Argument-1: $argument_size" 1> error_output.txt
@@ -211,7 +212,7 @@ EOSSH
     # - because you will get permission warnings if you dig through the root directories.
     # - You can change this but just keep in mind that this search will take a little bit
     # - longer to search through.
-    array=($(find /home -name "$argument"))
+    array=($(find $HOME -name "$argument"))
     len=${#array[*]}
 
     # If the find command has found the file or directory (once) on the file system then it
@@ -248,7 +249,7 @@ EOSSH
         echo "ERROR: There were more than one file found with that name..." 1> error_output.txt
         cleanup
     fi
-    if ! rm -rf ~/Transfer/* 2> error_output.txt ; then cleanup; fi
+    if ! rm -rf $HOME/Transfer/* 2> error_output.txt ; then cleanup; fi
 
     # Clean up the folder on the server. This could not be done in the previous
     # - ssh because we need to scp over the tar'd file.
