@@ -29,6 +29,8 @@ username=""
 storage_location="Documents/storage"
 compression="tar -czf"
 decompression="tar -xzf"
+top_directory=""
+item_type=""
 #--------------------------------------------------------------------
 # Check the incoming parameters such as items to pull from the server or
 # - the error switch. The error switch will help provide extra output from
@@ -76,6 +78,17 @@ do
     echo "--------------------"
     echo "Step-1: Packaging items and Transfering to server."
 
+    top_directory=$(pwd | sed 's|.*/||')
+    cd $current_directory
+
+    if [ -f "$current_directory/$argument" ]; then
+        item_type="file"
+    elif [ -d "$current_directory/$argument" ]; then
+        item_type="dir"
+    else
+        item_type="random"
+    fi
+
     # Concatenate the current working directory with the incoming argument to 
     # - get the full absolute path. Then check to make sure that the incoming
     # - argument is either a directory or file, else exit. After that, I get 
@@ -85,10 +98,12 @@ do
     absolute_path="$current_directory/$argument"
     if [ -d $absolute_path ] || [ -f $absolute_path ]; then
 
-        argument_size=$(find $HOME -name $argument | wc -l)
+        argument_size=$(find $current_directory -name $argument | wc -l)
         if ! $compression transfer.tar.gz $argument 2> error_output.txt ; then cleanup; fi
         if ! scp transfer.tar.gz $username@$ip_address:~/Transfer 2> error_output.txt 1> output.txt; then cleanup; fi
         if ! rm transfer.tar.gz 2> error_output.txt ; then cleanup; fi
+
+        if [ -f error_output.txt ]; then rm error_output.txt; fi
 
         if [ -f output.txt ]; then
             sed -i 's/^/\t/' output.txt
@@ -133,45 +148,69 @@ do
         if ! $decompression transfer.tar.gz -m 2> error_output.txt ; then cleanup2; fi
         if ! rm transfer.tar.gz 2> error_output.txt ; then cleanup2; fi
         
-        if [ -f error_output.txt ]; then
-            rm error_output.txt
-        fi
+        if [ -f error_output.txt ]; then rm error_output.txt; fi
         argument=\$(ls)
 
         argument_size_2=\$(find \$HOME/Transfer -name "\$argument" | wc -l)
         
         if [ "\$argument_size_2" != "$argument_size" ]; then
-            echo "Argument-1: $argument_size" 1> error_output.txt
+            pwd 1>> error_output.txt
+            find \$HOME/Transfer -name "\$argument" | wc -l 1>> error_output.txt
+            echo "Argument-1: $argument_size" 1>> error_output.txt
             echo "Argument-2: \$argument_size_2" 1>> error_output.txt
             echo "Not everything made it over to the darkside." 1>> error_output.txt
             cleanup2
         fi
 
-        array=(\$(find \$HOME/$storage_location -name "\$argument"))
+        if [ $item_type == "dir" ]; then
+            array=(\$(find \$HOME/$storage_location -type d -name "\$argument"))
+        elif [ $item_type == "file" ]; then
+            array=(\$(find \$HOME/$storage_location -type f -name "\$argument"))
+        else
+            array=(\$(find \$HOME/$storage_location -name "\$argument"))
+        fi
+
         len=\${#array[*]}
-        if [ \$len = 0 ]; then
-            echo "Adding File / Directory to collection..."
-            if ! mv \$argument ~/Documents/storage 2> error_output.txt ; then cleanup2; fi
+        if [ \$len == 0 ]; then
+            echo "Adding File / Directory to collection-1..."
+            if ! mv \$argument $HOME/Documents/storage 2> error_output.txt ; then cleanup2; fi
+            if [ -f error_output.txt ]; then rm error_output.txt; fi
         elif [ \$len -ge 2 ]; then
-            echo "There is more than one File / Directory that have the same name..." 1> error_output.txt
-            cleanup2
-        elif [ \$len -eq 2 ]; then
-            echo "Replacing File / Directory to collection..."
-
-            search="$current_directory/$argument"
-            if [ \$search == \${array[0]} ]; then
-                destroy=\${array[1]}
-            elif [ $search == ${array[1]} ]; then
-                destroy=\${array[0]} 
+            array=(\$(find \$HOME/$storage_location -type d -name "$top_directory"))
+            len=\${#array[*]}
+            if [ \$len == 0 ] || [ \$len -ge 2 ]; then
+                echo "There is more than one File / Directory that have the same name..." 1> error_output.txt
+                cleanup2
+            elif [ \$len -eq 1 ]; then
+                if ! cd \${array[0]} 2> \${array[0]}/error_output.txt ; then cleanup2; fi
+                if [ -f error_output.txt ]; then rm error_output.txt; fi
+                temp=\$(pwd)
+                array=(\$(find \$temp -name "\$argument"))
+                len=\${#array[*]}
+                if [ \$len == 1 ]; then
+                    echo "Replacing File / Directory to collection-1..."
+                    if [ -f "\$argument" ]; then
+                        if ! rm "\$argument" 2> error_output.txt ; then cleanup2; fi
+                    elif [ -d "\$argument" ]; then
+                        if ! rm -rf "\$argument" 2> error_output.txt ; then cleanup2; fi
+                    fi
+                    if ! mv \$HOME/Transfer/\$argument . 2> error_output.txt ; then cleanup2; fi
+                    if [ -f error_output.txt ]; then rm error_output.txt; fi
+                else
+                    echo "There is more than one File / Directory that have the same name..." 1> error_output.txt
+                    cleanup2
+                fi
             fi
+        elif [ \$len -eq 1 ]; then
+            echo "Replacing File / Directory to collection-2..."
 
-            absolute_path=$(echo $destroy | sed 's|\(.*\)/.*|\1|')
-            if [ -d \$destroy ]; then
-                rm -rf \$destroy
-            elif [ -f \$destroy ]; then
-                rm \$destroy
+            absolute_path=$(echo \${array[0]} | sed 's|\(.*\)/.*|\1|')
+            if [ -d \${array[0]} ]; then
+                if ! rm -rf \${array[0]} 2> error_output.txt ; then cleanup2; fi
+            elif [ -f \${array[0]} ]; then
+                if ! rm \${array[0]} 2> error_output.txt ; then cleanup2; fi
             fi
-            mv \$argument \$absolute_path
+            if ! mv \$argument \$absolute_path 2> error_output.txt ; then cleanup2; fi
         fi
 
         rm -rf ~/Transfer/*
@@ -191,6 +230,9 @@ EOSSH
             rm output.txt
         fi
         cleanup
+    else
+        sed -i 's/^/\t/' output.txt
+        cat output.txt
     fi
 
     echo "Finished."

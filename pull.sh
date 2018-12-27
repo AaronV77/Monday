@@ -126,11 +126,16 @@ do
             item=$(echo \${item%/*})
             if ! cd \$item 2> error_output.txt ; then cleanup2; fi 
             if ! $compression $HOME/Transfer/transfer.tar.gz $argument 2> error_output.txt ; then cleanup2; fi 
-            lines=\$(find \${array[0]} | wc -l)
+            lines=\$(find "\${array[0]}" | wc -l)
             echo \$lines
         elif [ \$len -ge 2 ]; then
             echo "There were more than one file found with that name..." 1> error_output.txt
-            echo "Length: \$len" >> error_output.txt
+            echo -e "\nHere are all the other items that we found with the same name." 1>> error_output.txt
+            for i in "\${!array[@]}" 
+            do 
+            echo -e "\t\$i" "\${array[\$i]}" 1>> error_output.txt
+            done
+            echo "Try pulling the upper directory of the item." 1>> error_output.txt
             cleanup2
 
         fi
