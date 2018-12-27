@@ -95,88 +95,8 @@ if [ $push_switch -eq 0 ] && [ $pull_switch -eq 0 ]; then
 fi
 
 if [ $push_switch -eq 1 ]; then
-    mkdir monday_testing
-    touch monday_testing/example_1.txt
-    touch monday_testing/example_2.txt
-    mkdir test-1
-    mkdir test-2
     echo "------------------------------"
     echo "Testing - Push.sh"
-    echo "------------------"
-    #---------------------------------------------------------------------------------
-    echo "Testing adding a directory w/ files."
-    push monday_testing 1> test_output.txt
-    results=$(cat test_output.txt | tail -2 | head -1)
-    rm test_output.txt
-    ssh $username@$ip_address -T 1> the_output.txt << EOF
-        outcome=\$(find \$HOME -type d -name monday_testing | wc -l)
-        if [ \$outcome -gt 1 ]; then
-            echo "1"
-        else 
-            cd ~/$storage_location
-            rm -rf monday_testing
-            echo "0"
-        fi
-EOF
-
-    outcome=$(cat the_output.txt)
-    rm the_output.txt
-    if [ "$results" == "Finished." ] || [ "$outcome" == "0" ]; then
-        echo "PASSED"
-    else
-        echo "FAILED"
-        echo -e "\n\t----------------------------"
-        push monday_testing -error 1> the_output.txt
-        test_failure
-    fi
-    echo "------------------"
-    #---------------------------------------------------------------------------------
-    echo "Testing replacing a directory w/ an added file."
-    touch monday_testing/example_2222.txt
-    push monday_testing 1> test_output.txt
-    results=$(cat test_output.txt | tail -2 | head -1)
-    rm test_output.txt
-    ssh $username@$ip_address -T 1> the_output.txt << EOF
-        outcome=\$(find \$HOME -type f -name example_2222.txt | wc -l)
-        if [ \$outcome -gt 1 ]; then
-            echo "1"
-        else 
-            cd ~/$storage_location
-            rm -rf monday_testing
-            echo "0"
-        fi
-EOF
-
-    outcome=$(cat the_output.txt)
-    rm the_output.txt
-    if [ "$results" == 'Finished.' ] || [ "$outcome" == '0' ]; then
-        echo "PASSED"
-    else
-        echo "FAILED"
-        echo -e "\n\t----------------------------"
-        push monday_testing -error 1> the_output.txt
-        test_failure
-    fi
-    echo "------------------"
-    #---------------------------------------------------------------------------------
-    echo "Testing adding a directory with more than one location."
-    ssh $username@$ip_address -T << EOF
-        cd \$HOME/$storage_location
-        mkdir second_testing
-        mkdir second_testing/monday_testing
-EOF
-
-    push monday_testing 1> test_output.txt
-    results=$(cat test_output.txt | tail -2 | head -1)
-    rm test_output.txt
-    if [ "$results" == 'Finished.' ]; then 
-        echo "PASSED"
-    else
-        echo "FAILED"
-        echo -e "\n\t----------------------------"
-        push monday_testing -error 1> the_output.txt
-        test_failure
-    fi
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Testing adding a just a file."
@@ -186,13 +106,13 @@ EOF
     rm test_output.txt
     ssh $username@$ip_address -T 1> the_output.txt << EOF
         outcome=\$(find \$HOME -type f -name monday_test.txt | wc -l)
-        if [ \$outcome -gt 1 ]; then
-            echo "1"
-        elif [ \$outcome -eq 1 ]; then
+        if [ \$outcome -eq 1 ]; then
             ls
             cd ~/$storage_location
             rm monday_test.txt
             echo "0"
+        elif [ \$outcome -gt 1 ]; then
+            echo "1"
         fi
 EOF
     outcome=$(cat the_output.txt)
@@ -208,24 +128,83 @@ EOF
     rm monday_test.txt
     echo "------------------"
     #---------------------------------------------------------------------------------
+    echo "Testing adding a directory w/ files."
+    mkdir monday_testing
+    push monday_testing 1> test_output.txt
+    results=$(cat test_output.txt | tail -2 | head -1)
+    rm test_output.txt
+    ssh $username@$ip_address -T 1> the_output.txt << EOF
+        outcome=\$(find \$HOME -type d -name monday_testing | wc -l)
+        if [ \$outcome -eq 1 ]; then
+            cd ~/$storage_location
+            rm -rf monday_testing
+            echo "0"
+        elif [ \$outcome -gt 1 ]; then
+            echo "1"
+        fi
+EOF
+
+    outcome=$(cat the_output.txt)
+    rm the_output.txt
+    if [ "$results" == "Finished." ] || [ "$outcome" == "0" ]; then
+        echo "PASSED"
+    else
+        echo "FAILED"
+        echo -e "\n\t----------------------------"
+        push monday_testing -error 1> the_output.txt
+        test_failure
+    fi
+    rm -rf monday_testing
+    echo "------------------"
+    #---------------------------------------------------------------------------------
+    echo "Testing replacing a directory w/ an added file."
+    mkdir monday_testing
+    touch monday_testing/example_2222.txt
+    push monday_testing 1> test_output.txt
+    results=$(cat test_output.txt | tail -2 | head -1)
+    rm test_output.txt
+    ssh $username@$ip_address -T 1> the_output.txt << EOF
+        outcome=\$(find \$HOME -type f -name example_2222.txt | wc -l)
+        if [ \$outcome -eq 1 ]; then
+            cd ~/$storage_location
+            rm -rf monday_testing
+            echo "0"
+        elif [ \$outcome -gt 1 ]; then
+            echo "1"
+        fi
+EOF
+
+    outcome=$(cat the_output.txt)
+    rm the_output.txt
+    if [ "$results" == 'Finished.' ] || [ "$outcome" == '0' ]; then
+        echo "PASSED"
+    else
+        echo "FAILED"
+        echo -e "\n\t----------------------------"
+        push monday_testing -error 1> the_output.txt
+        test_failure
+    fi
+    echo "------------------"
+    #---------------------------------------------------------------------------------
     echo "Testing adding two folders at once."
+    mkdir test-1 test-2
     push test-1 test2 1> test_output.txt
     results=$(cat test_output.txt | tail -2 | head -1)
     rm test_output.txt
     ssh -T $username@$ip_address 1> the_output.txt << EOF
         outcome=\$(find \$HOME -type d -name test-1 | wc -l)
-        if [ \$outcome -gt 1 ]; then
-            echo "1"
-        else 
+        if [ \$outcome -eq 1 ]; then
             cd ~/$storage_location
             rm -rf test-1
-            outcome=\$(find \$HOME -type d -name test-1 | wc -l)
+            outcome=\$(find \$HOME -type d -name test-2 | wc -l)
             if [ \$outcome -gt 1 ]; then
                 echo "1"
             else
                 rm -rf test-2
                 echo "0"
             fi
+        elif [ \$outcome -gt 1 ]; then
+            echo "1"
         fi
 EOF
 
@@ -239,12 +218,84 @@ EOF
         push test-1 test2 -error 1> the_output.txt
         test_failure
     fi
+    rm -rf test-1 test-2
+    echo "------------------"    
+    #---------------------------------------------------------------------------------
+    echo "Testing adding a folder that has the same name as a file."
+    mkdir example_1.txt
+    push example_1.txt 1> test_output.txt
+    results=$(cat test_output.txt | tail -2 | head -1)
+    rm test_output.txt
+    ssh -T $username@$ip_address 1> the_output.txt << EOF
+        cd ~/$storage_location
+
+        # This is for the next test.
+        mkdir blank_1
+        touch blank_1/something.txt
+        mkdir blank_2
+        touch blank_2/something.txt
+
+        if [ -d "example_1.txt" ]; then
+            rm -rf example_1.txt
+            echo "0"
+        else
+            echo 1
+        fi
+EOF
+
+    outcome=$(cat the_output.txt)
+    rm the_output.txt
+    if [ "$results" == 'Finished.' ] || [ "$outcome" == '0' ]; then
+        echo "PASSED"
+    else
+        echo "FAILED"
+        echo -e "\n\t----------------------------"
+        push example_1.txt -error 1> the_output.txt
+        test_failure
+    fi
+    rm -rf example_1.txt
+    echo "------------------"    
+    #---------------------------------------------------------------------------------
+    echo "Testing updating the correct file."
+    mkdir blank_1
+    touch blank_1/something.txt
+    echo "This has been updated." > blank_1/something.txt
+    cd blank_1
+    push something.txt 1> ../test_output.txt
+    cd ..
+    results=$(cat test_output.txt | tail -2 | head -1)
+    rm test_output.txt
+    ssh -T $username@$ip_address 1> the_output.txt << EOF
+        cd ~/$storage_location
+        temp=\$(cat blank_1/something.txt)
+        if [ "\$temp" == "This has been updated." ]; then
+            rm -rf blank_1 blank_2
+            echo "0"
+        else
+            rm -rf blank_1 blank_2
+            echo 1
+        fi
+EOF
+
+    outcome=$(cat the_output.txt)
+    rm the_output.txt
+    if [ "$results" == 'Finished.' ] || [ "$outcome" == '0' ]; then
+        echo "PASSED"
+    else
+        echo "FAILED"
+        echo -e "\n\t----------------------------"
+        cd blank_1
+        push blank_1/something.txt -error 1> ../the_output.txt
+        cd ..
+        test_failure
+    fi
+    rm -rf blank_1
     echo "------------------"    
     #---------------------------------------------------------------------------------
     echo "Cleaning Up the Push tests."
     ssh $username@$ip_address -T << EOF
         cd \$HOME/$storage_location
-        rm -rf second_testing
+        rm -rf monday_testing
 EOF
     rm -rf ~/Monday_Testing/*
     #---------------------------------------------------------------------------------
