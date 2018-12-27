@@ -73,6 +73,7 @@ username=""
 storage_location="Documents/storage"
 pull_switch=0
 push_switch=0
+current_directory=$(pwd)
 
 # Setup all of the moveable files for testing.
 mkdir Monday_Testing
@@ -108,7 +109,7 @@ if [ $push_switch -eq 1 ]; then
         outcome=\$(find \$HOME -type f -name monday_test.txt | wc -l)
         if [ \$outcome -eq 1 ]; then
             ls
-            cd ~/$storage_location
+            cd \$HOME/$storage_location
             rm monday_test.txt
             echo "0"
         elif [ \$outcome -gt 1 ]; then
@@ -136,7 +137,7 @@ EOF
     ssh $username@$ip_address -T 1> the_output.txt << EOF
         outcome=\$(find \$HOME -type d -name monday_testing | wc -l)
         if [ \$outcome -eq 1 ]; then
-            cd ~/$storage_location
+            cd \$HOME/$storage_location
             rm -rf monday_testing
             echo "0"
         elif [ \$outcome -gt 1 ]; then
@@ -166,7 +167,7 @@ EOF
     ssh $username@$ip_address -T 1> the_output.txt << EOF
         outcome=\$(find \$HOME -type f -name example_2222.txt | wc -l)
         if [ \$outcome -eq 1 ]; then
-            cd ~/$storage_location
+            cd \$HOME/$storage_location
             rm -rf monday_testing
             echo "0"
         elif [ \$outcome -gt 1 ]; then
@@ -194,7 +195,7 @@ EOF
     ssh -T $username@$ip_address 1> the_output.txt << EOF
         outcome=\$(find \$HOME -type d -name test-1 | wc -l)
         if [ \$outcome -eq 1 ]; then
-            cd ~/$storage_location
+            cd \$HOME/$storage_location
             rm -rf test-1
             outcome=\$(find \$HOME -type d -name test-2 | wc -l)
             if [ \$outcome -gt 1 ]; then
@@ -227,7 +228,7 @@ EOF
     results=$(cat test_output.txt | tail -2 | head -1)
     rm test_output.txt
     ssh -T $username@$ip_address 1> the_output.txt << EOF
-        cd ~/$storage_location
+        cd \$HOME/$storage_location
 
         # This is for the next test.
         mkdir blank_1
@@ -266,7 +267,7 @@ EOF
     results=$(cat test_output.txt | tail -2 | head -1)
     rm test_output.txt
     ssh -T $username@$ip_address 1> the_output.txt << EOF
-        cd ~/$storage_location
+        cd \$HOME/$storage_location
         temp=\$(cat blank_1/something.txt)
         if [ "\$temp" == "This has been updated." ]; then
             rm -rf blank_1 blank_2
@@ -297,7 +298,8 @@ EOF
         cd \$HOME/$storage_location
         rm -rf monday_testing
 EOF
-    rm -rf ~/Monday_Testing/*
+
+    rm -rf $current_directory/Monday_Testing/*
     #---------------------------------------------------------------------------------
     echo "------------------------------"
     if [ $pull_switch -eq 1 ]; then
