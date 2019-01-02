@@ -6,8 +6,6 @@
 #License: GNU GENERAL PUBLIC LICENSE
 #Email: valoroso99@gmail.com
 #--------------------------------------------------------------------*/
-ip_address=""
-username=""
 path_location=""
 current_location=$(pwd)
 
@@ -29,42 +27,40 @@ else
     exit
 fi
 
-pull_location="$path_location/pull.sh"
-push_location="$path_location/push.sh"
-test_location="$path_location/test.sh"
+pull_location="$path_location/scripts/pull.sh"
+push_location="$path_location/scripts/push.sh"
+test_location="$path_location/test/test.sh"
 
 cd $path_location
 if [ -f $pull_location ]; then
-    ip_address=$(grep $pull_location -e 'ip_address=')
-    username=$(grep $pull_location -e 'username=')
-    cp $current_location/pull.sh $path_location
-    sed -i '/ip_address=/c\'$ip_address pull.sh
-    sed -i '/username=/c\'$username pull.sh
+    cp $current_location/pull.sh $path_location/scripts
     chmod 775 $pull_location
+    if [ -d "test" ]; then
+        cp $current_location/pull.sh $path_location/test
+        chmod 775 $path_location/test/pull.sh
+    fi  
 else
     echo "There was no pull script in that location."
 fi
 
 if [ -f $push_location ]; then
-    ip_address=$(grep $push_location -e 'ip_address=')
-    username=$(grep $push_location -e 'username=')
-    cp $current_location/push.sh $path_location
-    sed -i '/ip_address=/c\'$ip_address push.sh
-    sed -i '/username=/c\'$username push.sh
+    cp $current_location/push.sh $path_location/scripts
     chmod 775 $push_location
+    if [ -d "test" ]; then
+        cp $current_location/push.sh $path_location/test
+        chmod 775 $path_location/test/push.sh
+    fi  
 else
     echo "There was no push script in that location."
 fi
 
 if [ -f $test_location ]; then
-    ip_address=$(grep $test_location -e 'ip_address=')
-    username=$(grep $test_location -e 'username=')
-    cp $current_location/test.sh $path_location
-    sed -i '/ip_address=/c\'$ip_address test.sh
-    sed -i '/username=/c\'$username test.sh
+    cp $current_location/test.sh $path_location/test/
     chmod 775 $test_location
 else
-    echo "There was no test script in that location."
+    if [ -d $path_location/test ]; then
+        echo "There was no test script in that location."
+    fi
 fi
 
 exit

@@ -33,18 +33,34 @@ cleanup () {
 }
 trap cleanup 1 2 3 6
 #--------------------------------------------------------------------
+alias_clear () {
+    the_array=("push" "test_push" "pull" "test_pull")
+    for b_alias in "${the_array[@]}"
+    do
+        if ! the_command=$($b_alias &> /dev/null); then
+            line=$(grep -n "$b_alias ()" $1 | cut -d : -f 1)
+            if [ ! -z "$line" ] || [ "$line" != "" ]; then
+                sed -i -e $line'd' $1
+            fi
+        fi
+    done 
+}
+#--------------------------------------------------------------------
 ip_address=None
 username=""
 current_directory=$(pwd)
 client_switch=0
 server_switch=0
+test_switch=0
 progression=()
 #--------------------------------------------------------------------
 while test $# -gt 0; do
     if [ "$1" == "-client" ]; then
         client_switch=1
-    elif [ "$1" == "-server"]
+    elif [ "$1" == "-server" ]; then
         client_switch=1
+    elif [ "$1" == "-test" ]; then
+        test_switch=1
     else
         echo "Unrecognized parameter: $1"
     fi
@@ -59,30 +75,30 @@ fi
 if [ $server_switch -eq 1 ]; then
     # Setup the ssh keys 
     if [ ! -d $HOME/.ssh ]; then
-        mkdir $HOME/.ssh
-        mkdir $HOME/.ssh/sockets
+        if ! mkdir $HOME/.ssh; then cleanup; fi
+        if ! mkdir $HOME/.ssh/sockets; then cleanup; fi
         progression+=(1)
     elif [ ! -d $HOME/.ssh/sockets ]; then
-        mkdir $HOME/.ssh/sockets
+        if ! mkdir $HOME/.ssh/sockets; then cleanup; fi
         progression+=(2)
     fi
 
-    cd $HOME/.ssh
-    mkdir temp
-    cd temp
+    if ! cd $HOME/.ssh; then cleanup; fi
+    if ! mkdir temp; then cleanup; fi
+    if ! cd temp; then cleanup; fi
 
-    ssh-keygen -t rsa
-    mv id_rsa monday_server_id_rsa
-    mv id_rsa.pub monday_server_id_rsa.pub
-    mv monday_server_id_rsa ../
-    mv monday_server_id_rsa.pub ../
+    if ! ssh-keygen -t rsa; then cleanup; fi
+    if ! mv id_rsa monday_server_id_rsa; then cleanup; fi
+    if ! mv id_rsa.pub monday_server_id_rsa.pub; then cleanup; fi
+    if ! mv monday_server_id_rsa ../; then cleanup; fi
+    if ! mv monday_server_id_rsa.pub ../; then cleanup; fi
 
-    cd ..
-    rm -rf temp
+    if ! cd ..; then cleanup; fi
+    if ! rm -rf temp; then cleanup; fi
     
     progression+=(3)
 
-    cp config backup_config
+    if ! cp config backup_config; then cleanup; fi
 
     echo "Host *\n    ControlMaster auto\n    ControlPath ~/.ssh/ssh_mux_%h_%p_%r" >> config
     echo "Host $ip_address\nIdentityFile ~/.ssh/monday_server_id_rsa.pub" >> config
@@ -114,29 +130,59 @@ EOSSH
     progression+=(5)
 
     if [ -f output.txt ]; then
-        rm output.txt
+        if ! rm output.txt; then cleanup; fi
     fi
 
+    if ! cd $current_directory; then cleanup; fi
 fi
 
 if [ $client_switch -eq 1 ]; then
-    # Setup the aliases
-    scripts_directory=$(pwd)
-    cd $HOME/
+
+    script_directory=$(pwd)
+    if ! cd $HOME; then cleanup; fi
+
+    if [ -f .bashrc ]; then
+        alias_clear .bashrc
+    elif [ -f .bash_profile ]; then
+        alias_clear .bash_profile
+    fi
+
+    if ! mkdir .monday; then cleanup; fi
+    if ! mkdir scripts; then cleanup; fi
+    if ! mv $script_directory/.locations .monday/; then cleanup; fi
+    if ! mv $script_directory/push.sh .monday/scripts/; then cleanup; fi
+    if ! mv $script_directory/pull.sh .monday/scripts/; then cleanup; fi
+
+    if [ $test_switch -eq 1 ]; then
+        if ! mkdir .monday/test; then cleanup; fi
+        if ! mv $script_directory/push.sh .monday/test/; then cleanup; fi
+        if ! mv $script_directory/pull.sh .monday/test/; then cleanup; fi
+        if ! mv $script_directory/test.sh .monday/test/; then cleanup; fi
+    fi
+
     SHELL=$(ps -p $$ -oargs=)
-    if [ $SHELL == "bash" ];
-    then
+    if [ $SHELL == "bash" ]; then
         echo "bash"
-        if [ -f .bashrc ]
-        then
+        if [ -f .bashrc ]; then
             echo "" >> .bashrc
-            echo "push () { bash "$current_directory"/push.sh \$@ ; }" >> .bashrc
-            echo "pull () { bash "$current_directory"/home/valorosoa/pull.sh \$@ ; }" >> .bashrc
+            echo "push () { bash $HOME/.monday/scripts/push.sh \$@ ; }" >> .bashrc
+            echo "pull () { bash $HOME/.monday/scripts/pull.sh \$@ ; }" >> .bashrc
+
+            if [ $test_switch -eq 1 ]; then
+                echo "test_push () { bash $HOME/.monday/test/push.sh \$@ ; }" >> .bashrc
+                echo "test_pull () { bash $HOME/.monday/test/pull.sh \$@ ; }" >> .bashrc
+            fi
+
             source .bashrc
         else
             echo "" >> .bash_profile
-            echo "push () { bash "$current_directory"/push.sh \$@ ; }" >> .bash_profile
-            echo "pull () { bash "$current_directory"/pull.sh \$@ ; }" >> .bash_profile
+            echo "push () { bash $HOME/.monday/scripts/push.sh \$@ ; }" >> .bash_profile
+            echo "pull () { bash $HOME/.monday/scripts/pull.sh \$@ ; }" >> .bash_profile
+
+            if [ $test_switch -eq 1 ]; then
+                echo "test_push () { bash $HOME/.monday/test/push.sh \$@ ; }" >> .bash_profile
+                echo "test_pull () { bash $HOME/.monday/test/pull.sh \$@ ; }" >> .bash_profile
+            fi
             source .bash_profile
         fi
     else
