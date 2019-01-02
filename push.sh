@@ -42,7 +42,7 @@ item_type=""
 # - and the last forward slash (removed) does not need to be there. It
 # - will be added to the array.
 while test $# -gt 0; do
-    if [ "$1" = "-error" ]; then
+    if [ "$1" == "-error" ]; then
         error_switch=1
         compression="tar -czvf"
         decompression="tar -xzvf"
