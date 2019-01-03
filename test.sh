@@ -69,6 +69,7 @@ clenaup () {
         fi
         exit
 EOF
+return
 }
 trap cleanup 1 2 3 6 
 #--------------------------------------------------------------------
@@ -85,7 +86,7 @@ credentials () {
             username2=$(sed -n $line'p' $HOME/.monday/.locations | awk -F'=' '{print $2}')
             if [ -z "$username2" ] || [ "$username2" == "" ]; then
                 echo "There was an issue with getting the username that you requested..."
-                exit
+                return
             else
                 username=$username2
             fi
@@ -94,7 +95,7 @@ credentials () {
             ip_address2=$(sed -n $line'p' $HOME/.monday/.locations | awk -F'=' '{print $2}')
             if [ -z "$ip_address2" ] || [ "$ip_address2" == "" ]; then
                 echo "There was an issue with getting the password that you requested..."
-                exit
+                return
             else
                 ip_address=$ip_address2
             fi
@@ -108,10 +109,12 @@ storage_location="Documents/storage"
 pull_switch=0
 push_switch=0
 current_directory=$(pwd)
+error_status=0
 
 # Get the credentails from the file.
 credentials "DEFAULT"
 #--------------------------------------------------------------------
+
 # Setup all of the moveable files for testing.
 mkdir Monday_Testing
 cd Monday_Testing
@@ -128,11 +131,12 @@ while [ $# -gt 0 ]; do
         storage_location="$1"
     elif [ "$1" == "-remote" ]; then
         shift
-        incoming_argument=$(echo $1 | awk '{print toupper($0)}')
-        credentials $incoming_argument
+        remote_dest=$(echo $1 | awk '{print toupper($0)}')
+        credentials $remote_dest
     elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
         cat $HOME/.monday/usage | more
-        exit
+        return
+
     fi
     shift
 done
@@ -149,7 +153,7 @@ if [ $push_switch -eq 1 ]; then
     #---------------------------------------------------------------------------------
     echo "Testing adding a just a file."
     touch monday_test.txt
-    push monday_test.txt -storage $storage_location 1> test_output.txt
+    push monday_test.txt -storage $storage_location -remote $remote_dest 1> test_output.txt
     results=$(cat test_output.txt | tail -2 | head -1)
     rm test_output.txt
     ssh $username@$ip_address -T 1> the_output.txt << EOF
@@ -170,7 +174,7 @@ EOF
     else
         echo "FAILED"
         echo -e "\n\t----------------------------"
-        push monday_test.txt -storage $storage_location -error 1> the_output.txt
+        push monday_test.txt -storage $storage_location -remote $remote_dest -error 1> the_output.txt
         test_failure
     fi
     rm monday_test.txt
@@ -178,7 +182,7 @@ EOF
     #---------------------------------------------------------------------------------
     echo "Testing adding a directory w/ files."
     mkdir monday_testing
-    push monday_testing -storage $storage_location 1> test_output.txt
+    push monday_testing -storage $storage_location -remote $remote_dest 1> test_output.txt
     results=$(cat test_output.txt | tail -2 | head -1)
     rm test_output.txt
     ssh $username@$ip_address -T 1> the_output.txt << EOF
@@ -199,7 +203,7 @@ EOF
     else
         echo "FAILED"
         echo -e "\n\t----------------------------"
-        push monday_testing -storage $storage_location -error 1> the_output.txt
+        push monday_testing -storage $storage_location -remote $remote_dest -error 1> the_output.txt
         test_failure
     fi
     rm -rf monday_testing
@@ -208,7 +212,7 @@ EOF
     echo "Testing replacing a directory w/ an added file."
     mkdir monday_testing
     touch monday_testing/example_2222.txt
-    push monday_testing -storage $storage_location 1> test_output.txt
+    push monday_testing -storage $storage_location -remote $remote_dest 1> test_output.txt
     results=$(cat test_output.txt | tail -2 | head -1)
     rm test_output.txt
     ssh $username@$ip_address -T 1> the_output.txt << EOF
@@ -229,14 +233,14 @@ EOF
     else
         echo "FAILED"
         echo -e "\n\t----------------------------"
-        push monday_testing -storage $storage_location -error 1> the_output.txt
+        push monday_testing -storage $storage_location -remote $remote_dest -error 1> the_output.txt
         test_failure
     fi
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Testing adding two folders at once."
     mkdir test-1 test-2
-    push test-1 test2 -storage $storage_location 1> test_output.txt
+    push test-1 test2 -storage $storage_location -remote $remote_dest 1> test_output.txt
     results=$(cat test_output.txt | tail -2 | head -1)
     rm test_output.txt
     ssh -T $username@$ip_address 1> the_output.txt << EOF
@@ -263,7 +267,7 @@ EOF
     else
         echo "FAILED"
         echo -e "\n\t----------------------------"
-        push test-1 test2 -storage $storage_location -error 1> the_output.txt
+        push test-1 test2 -storage $storage_location -remote $remote_dest -error 1> the_output.txt
         test_failure
     fi
     rm -rf test-1 test-2
@@ -271,7 +275,7 @@ EOF
     #---------------------------------------------------------------------------------
     echo "Testing adding a folder that has the same name as a file."
     mkdir example_1.txt
-    push example_1.txt -storage $storage_location 1> test_output.txt
+    push example_1.txt -storage $storage_location -remote $remote_dest 1> test_output.txt
     results=$(cat test_output.txt | tail -2 | head -1)
     rm test_output.txt
     ssh -T $username@$ip_address 1> the_output.txt << EOF
@@ -298,7 +302,7 @@ EOF
     else
         echo "FAILED"
         echo -e "\n\t----------------------------"
-        push example_1.txt -storage $storage_location -error 1> the_output.txt
+        push example_1.txt -storage $storage_location -remote $remote_dest -error 1> the_output.txt
         test_failure
     fi
     rm -rf example_1.txt
@@ -309,7 +313,7 @@ EOF
     touch blank_1/something.txt
     echo "This has been updated." > blank_1/something.txt
     cd blank_1
-    push something.txt -storage $storage_location 1> ../test_output.txt
+    push something.txt -storage $storage_location -remote $remote_dest 1> ../test_output.txt
     cd ..
     results=$(cat test_output.txt | tail -2 | head -1)
     rm test_output.txt
@@ -333,7 +337,7 @@ EOF
         echo "FAILED"
         echo -e "\n\t----------------------------"
         cd blank_1
-        push blank_1/something.txt -storage $storage_location -error 1> ../the_output.txt
+        push blank_1/something.txt -storage $storage_location -remote $remote_dest -error 1> ../the_output.txt
         cd ..
         test_failure
     fi
@@ -356,7 +360,7 @@ fi
 
 
 if [ $pull_switch -eq 1 ]; then
-    ssh -T $username@$ip_address << EOF
+    ssh $username@$ip_address -T << EOF
         cd \$HOME/$storage_location
         mkdir monday_testing_1
         touch monday_testing_1/something_1.txt
@@ -370,7 +374,7 @@ EOF
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Pulling a directory with files."
-    pull monday_testing_1 -storage $storage_location 1> the_output.txt
+    pull monday_testing_1 -storage $storage_location -remote $remote_dest 1> the_output.txt
     outcome=$(cat the_output.txt | tail -2 | head -1)
     rm the_output.txt
     directory=$(ls)
@@ -378,14 +382,14 @@ EOF
         echo "PASSED"
     else
         echo "FAILED"
-        pull monday_testing_1 -storage $storage_location -error 1> the_output.txt
+        pull monday_testing_1 -storage $storage_location -remote $remote_dest -error 1> the_output.txt
         test_failure
     fi
     rm -rf monday_testing_1
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Pulling an empty directory."
-    pull monday_testing_2 -storage $storage_location 1> the_output.txt
+    pull monday_testing_2 -storage $storage_location -remote $remote_dest 1> the_output.txt
     outcome=$(cat the_output.txt | tail -2 | head -1)
     rm the_output.txt
     directory=$(ls)
@@ -394,14 +398,14 @@ EOF
     else
         echo "FAILED"
         echo -e "\n\t----------------------------"
-        pull monday_testing_2 -storage $storage_location -error 1> the_output.txt
+        pull monday_testing_2 -storage $storage_location -remote $remote_dest -error 1> the_output.txt
         test_failure
     fi
     rm -rf monday_testing_2
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Pulling a file."
-    pull the_test_file.txt -storage $storage_location 1> the_output.txt
+    pull the_test_file.txt -storage $storage_location -remote $remote_dest 1> the_output.txt
     outcome=$(cat the_output.txt | tail -2 | head -1)
     rm the_output.txt
     directory=$(ls)
@@ -410,7 +414,7 @@ EOF
     else
         echo "FAILED"
         echo -e "\n\t----------------------------"
-        pull the_test_file.txt -storage $storage_location -error 1> the_output.txt
+        pull the_test_file.txt -storage $storage_location -remote $remote_dest -error 1> the_output.txt
         test_failure
     fi
     echo "------------------"
@@ -418,18 +422,18 @@ EOF
     echo "Pulling a file thats already on the system."
     first_stamp=$(stat --printf=%y the_test_file.txt | cut -d. -f1)
     sleep 5
-    ssh -T $username@$ip_address << EOF
+    ssh $username@$ip_address -T << EOF
         echo "This is something extra" 1> \$HOME/$storage_location/the_test_file.txt
 EOF
 
-    pull the_test_file.txt -storage $storage_location 1> the_output.txt
+    pull the_test_file.txt -storage $storage_location -remote $remote_dest 1> the_output.txt
     outcome=$(cat the_output.txt | tail -2 | head -1)
     rm the_output.txt
     second_stamp=$(stat --printf=%y the_test_file.txt | cut -d. -f1)
     if [ "$first_stamp" == "$second_stamp" ] || [ "$outcome" != 'Finished.' ]; then
         echo "FAILED"
         echo -e "\t----------------------------"
-        pull the_test_file.txt -storage $storage_location -error 1> the_output.txt
+        pull the_test_file.txt -storage $storage_location -remote $remote_dest -error 1> the_output.txt
         test_failure
     else
         echo "PASSED"
@@ -442,7 +446,7 @@ EOF
         cd \$HOME/$storage_location
         touch monday_testing_2/the_test_file.txt
 EOF
-    pull the_test_file.txt -storage $storage_location 1> the_output.txt
+    pull the_test_file.txt -storage $storage_location -remote $remote_dest 1> the_output.txt
     outcome=$(cat the_output.txt | tail -1)
     rm the_output.txt
     if [ "$outcome" == 'Exiting...' ]; then
@@ -450,13 +454,13 @@ EOF
     else
         echo "FAILED"
         echo -e "\t----------------------------"
-        pull the_test_file.txt -storage $storage_location -error 1> output.txt
+        pull the_test_file.txt -storage $storage_location -remote $remote_dest -error 1> output.txt
         test_failure
     fi
     echo "------------------"
     #---------------------------------------------------------------------------------
     echo "Pulling two folders."
-    pull monday_testing_1 monday_testing_2 -test -storage $storage_location 1> the_output.txt
+    pull monday_testing_1 monday_testing_2 -test -storage $storage_location -remote $remote_dest 1> the_output.txt
     outcome=$(cat the_output.txt | tail -2 | head -1)
     rm the_output.txt
     directory_contents=$(ls | wc -l)
@@ -465,7 +469,7 @@ EOF
     else
         echo "FAILED"
         echo -e "\t----------------------------"
-        pull monday_testing_1 monday_testing_2 -storage $storage_location -error 1> the_output.txt
+        pull monday_testing_1 monday_testing_2 -storage $storage_location -remote $remote_dest -error 1> the_output.txt
         test_failure
     fi
     rm -rf monday_testing_1
@@ -485,4 +489,4 @@ fi
 
 cd ..
 rm -rf Monday_Testing
-exit
+return

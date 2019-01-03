@@ -61,7 +61,7 @@ while test $# -gt 0; do
         client_switch=1
     elif [ "$1" == "-server" ]; then
         client_switch=1
-    elif [ "$1" == "-test" ]; then
+    elif [ "$1" == "-develop" ]; then
         test_switch=1
     elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
         cat $current_directory/usage | more
@@ -73,8 +73,8 @@ while test $# -gt 0; do
 done
 
 if [ $client_switch -eq 0 ] && [ $server_switch -eq 0 ]; then
-    push_switch=1
-    pull_switch=1
+    client_switch=1
+    server_switch=1
 fi
 
 if [ $server_switch -eq 1 ]; then
@@ -89,36 +89,36 @@ if [ $server_switch -eq 1 ]; then
     fi
 
     if ! cd $HOME/.ssh; then cleanup; fi
-    if ! mkdir temp; then cleanup; fi
-    if ! cd temp; then cleanup; fi
 
     if ! ssh-keygen -t rsa; then cleanup; fi
     if ! mv id_rsa monday_server_id_rsa; then cleanup; fi
     if ! mv id_rsa.pub monday_server_id_rsa.pub; then cleanup; fi
-    if ! mv monday_server_id_rsa ../; then cleanup; fi
-    if ! mv monday_server_id_rsa.pub ../; then cleanup; fi
-
-    if ! cd ..; then cleanup; fi
-    if ! rm -rf temp; then cleanup; fi
     
     progression+=(3)
 
     if ! cp config backup_config; then cleanup; fi
 
-    echo "Host *\n    ControlMaster auto\n    ControlPath ~/.ssh/ssh_mux_%h_%p_%r" >> config
-    echo "Host $ip_address\nIdentityFile ~/.ssh/monday_server_id_rsa.pub" >> config
+    echo -e "\nHost *\n    ControlMaster auto\n    ControlPath  ~/.ssh/sockets/%r@%h-%p\n    ControlPersist 20" >> config
+
+    echo -e "\nHost $ip_address\n    IdentityFile ~/.ssh/monday_server_id_rsa.pub" >> config
 
     progression+=(4)
 
     key=$(cat monday_server_id_rsa.pub)
 
     # Setup the server
-    ssh $username@$ip_address -T > output.txt << EOSSH
-        if ! [ -d $HOME/.ssh ]; then
-            mkdir $HOME/.ssh
+    ssh $username@$ip_address -T << EOSSH
+        if [ ! -d \$HOME/.ssh ]; then
+            mkdir \$HOME/.ssh
         fi
 
-        cd $HOME/.ssh
+        if [ ! -d \$HOME/Transfer ]; then
+            mkdir \$HOME/Transfer
+        fi
+
+        sudo apt install ssh
+
+        cd \$HOME/.ssh
         echo $key >> authorized_keys
         chmod 644 authorized_keys
 
@@ -126,16 +126,14 @@ if [ $server_switch -eq 1 ]; then
         echo "***Warning***"
         echo "Once you make this change then you will not be able to ssh into your server with password."
         echo "If you make a mistake, then please have another way of getting into your sever."
-        read -p "Press enter to continue"
-        nano /etc/ssh/sshd_config
-
+        echo "Then restart your ssh service with the following: sudo service ssh restart."
         exit
 EOSSH
 
     progression+=(5)
 
-    if [ -f output.txt ]; then
-        if ! rm output.txt; then cleanup; fi
+    if [ -f backup_config ]; then
+        rm backup_config
     fi
 
     if ! cd $current_directory; then cleanup; fi
@@ -178,7 +176,6 @@ if [ $client_switch -eq 1 ]; then
     fi
 
     if [ -f .bashrc ]; then
-        echo "" >> .bashrc
         echo "push () { bash $HOME/.monday/scripts/push.sh \$@ ; }" >> .bashrc
         echo "pull () { bash $HOME/.monday/scripts/pull.sh \$@ ; }" >> .bashrc
 
@@ -189,7 +186,6 @@ if [ $client_switch -eq 1 ]; then
 
         source .bashrc
     elif [ -f .bash_profile ]; then
-        echo "" >> .bash_profile
         echo "push () { bash $HOME/.monday/scripts/push.sh \$@ ; }" >> .bash_profile
         echo "pull () { bash $HOME/.monday/scripts/pull.sh \$@ ; }" >> .bash_profile
 

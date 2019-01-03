@@ -53,5 +53,5 @@ Setup Arguments:
     -server: Takes no additional arguments and will only setup the server computer 
     for this package.
 
-    -test: Takes no additional arguments and will setup the development directory
+    -develop: Takes no additional arguments and will setup the development directory
     for this package. This is located in .monday/test.
