@@ -196,6 +196,12 @@ do
             exit
         }
         trap cleanup 1 2 3 6
+
+        if [ ! -d \$HOME/$storage_location ]; then
+            echo "There was a problem with your storage location..." > error_output.txt
+            cleanup2
+        fi
+
         if ! cd \$HOME/Transfer 2> \$HOME/Transfer/error_output.txt ; then cleanup2; fi
         if ! $decompression transfer.tar.gz -m 2> error_output.txt ; then cleanup2; fi
         if ! rm transfer.tar.gz 2> error_output.txt ; then cleanup2; fi
@@ -221,7 +227,7 @@ do
         else
             array=(\$(find \$HOME/$storage_location -name "\$argument"))
         fi
-
+        
         len=\${#array[*]}
         if [ \$len == 0 ]; then
             echo "Adding File / Directory to collection-1..."

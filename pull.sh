@@ -169,6 +169,11 @@ do
         fi 
         if ! cd \$HOME/Transfer 2> \$HOME/Transfer/error_output.txt ; then cleanup2; fi 
 
+        if [ ! -d \$HOME/$storage_location ]; then
+            echo "There was a problem with your storage location..." > error_output.txt
+            cleanup2
+        fi
+
         array=(\$(find \$HOME/$storage_location -name "$argument"))
         len=\${#array[*]}
         if [ \$len == 0 ]; then
