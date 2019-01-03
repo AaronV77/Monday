@@ -67,15 +67,14 @@ item_type=""
 # Get the credentails from the file.
 credentials "DEFAULT"
 #--------------------------------------------------------------------
-# Check the incoming parameters such as items to pull from the server or
-# - the error switch. The error switch will help provide extra output from
-# - the compression and decompression of the items. Everything besides the 
-# - error switch is going to be checked for emptiness and NULL. The error
-# - switch is the only parameter that should have '-' in front of it, every
-# - thing else will be ignored. Then lastly, I check for the ending and
-# - beginning forward slash. The beginning slash needs to be there (so added) 
-# - and the last forward slash (removed) does not need to be there. It
-# - will be added to the array.
+# The following section of code will check the following arguments that are 
+# - passed to the following script. There are a total of four different arguments
+# - that can be passed to this script. Please just type the alias name "push" or
+# - "pull" then "-h" or "--h" to get more information about the possible arguments
+# - that can be passed. For everything else that is passed in we will want to
+# - check the validity, then I check for the ending and beginning forward slash. 
+# - The beginning slash needs to be there (so added) and the last forward slash 
+# - (removed) does not need to be there. It will be added to the array.
 while [ $# -gt 0 ]; do
     if [ "$1" == "-error" ]; then
         error_switch=1

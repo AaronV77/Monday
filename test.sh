@@ -119,7 +119,8 @@ credentials "DEFAULT"
 mkdir Monday_Testing
 cd Monday_Testing
 
-# Check the incoming arguments for independent testing capabilities.
+# Check the incoming arguments for independent testing capabilities, different
+# - storage locations, and then lastly different servers to store too.
 argument=$1
 while [ $# -gt 0 ]; do
     if [ "$1" == "-push" ]; then
