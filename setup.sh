@@ -20,7 +20,7 @@ cleanup () {
             cd $HOME/.ssh
             cp backup_config config
             rm backup_config
-        elif [ $progression -eq 5]
+        elif [ $progression -eq 5]; then
             echo "There were changes done on the server that you will need to fix."
             echo "Do the following: "
             echo -e "\t Remove the client key from inside the .ssh/authorized_keys."
@@ -34,7 +34,7 @@ cleanup () {
 trap cleanup 1 2 3 6
 #--------------------------------------------------------------------
 alias_clear () {
-    the_array=("push" "test_push" "pull" "test_pull")
+    the_array=( "test_push" "test_pull" "push" "pull" )
     for b_alias in "${the_array[@]}"
     do
         if ! the_command=$($b_alias &> /dev/null); then
@@ -53,6 +53,8 @@ client_switch=0
 server_switch=0
 test_switch=0
 progression=()
+
+chmod 775 $current_directory/*
 #--------------------------------------------------------------------
 while test $# -gt 0; do
     if [ "$1" == "-client" ]; then
@@ -61,6 +63,9 @@ while test $# -gt 0; do
         client_switch=1
     elif [ "$1" == "-test" ]; then
         test_switch=1
+    elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+        cat $current_directory/usage | more
+        exit
     else
         echo "Unrecognized parameter: $1"
     fi
@@ -147,49 +152,59 @@ if [ $client_switch -eq 1 ]; then
         alias_clear .bash_profile
     fi
 
-    if ! mkdir .monday; then cleanup; fi
-    if ! mkdir scripts; then cleanup; fi
-    if ! mv $script_directory/.locations .monday/; then cleanup; fi
-    if ! mv $script_directory/push.sh .monday/scripts/; then cleanup; fi
-    if ! mv $script_directory/pull.sh .monday/scripts/; then cleanup; fi
+    if [ ! -d .monday ]; then
+        if ! mkdir .monday; then cleanup; fi
+    fi
+   
+    if [ ! -d .monday/scripts ]; then
+        if ! mkdir .monday/scripts; then cleanup; fi
+    fi
+
+    if [ ! -f .monday/.locations ]; then
+        if ! cp $script_directory/.locations .monday/; then cleanup; fi
+    fi
+    
+    if ! cp $script_directory/usage .monday/; then cleanup; fi
+    if ! cp $script_directory/push.sh .monday/scripts/; then cleanup; fi
+    if ! cp $script_directory/pull.sh .monday/scripts/; then cleanup; fi
 
     if [ $test_switch -eq 1 ]; then
-        if ! mkdir .monday/test; then cleanup; fi
-        if ! mv $script_directory/push.sh .monday/test/; then cleanup; fi
-        if ! mv $script_directory/pull.sh .monday/test/; then cleanup; fi
-        if ! mv $script_directory/test.sh .monday/test/; then cleanup; fi
+        if [ ! -d .monday/test ]; then
+            if ! mkdir .monday/test; then cleanup; fi
+        fi
+        if ! cp $script_directory/push.sh .monday/test/; then cleanup; fi
+        if ! cp $script_directory/pull.sh .monday/test/; then cleanup; fi
+        if ! cp $script_directory/test.sh .monday/test/; then cleanup; fi
     fi
 
-    SHELL=$(ps -p $$ -oargs=)
-    if [ $SHELL == "bash" ]; then
-        echo "bash"
-        if [ -f .bashrc ]; then
-            echo "" >> .bashrc
-            echo "push () { bash $HOME/.monday/scripts/push.sh \$@ ; }" >> .bashrc
-            echo "pull () { bash $HOME/.monday/scripts/pull.sh \$@ ; }" >> .bashrc
+    if [ -f .bashrc ]; then
+        echo "" >> .bashrc
+        echo "push () { bash $HOME/.monday/scripts/push.sh \$@ ; }" >> .bashrc
+        echo "pull () { bash $HOME/.monday/scripts/pull.sh \$@ ; }" >> .bashrc
 
-            if [ $test_switch -eq 1 ]; then
-                echo "test_push () { bash $HOME/.monday/test/push.sh \$@ ; }" >> .bashrc
-                echo "test_pull () { bash $HOME/.monday/test/pull.sh \$@ ; }" >> .bashrc
-            fi
-
-            source .bashrc
-        else
-            echo "" >> .bash_profile
-            echo "push () { bash $HOME/.monday/scripts/push.sh \$@ ; }" >> .bash_profile
-            echo "pull () { bash $HOME/.monday/scripts/pull.sh \$@ ; }" >> .bash_profile
-
-            if [ $test_switch -eq 1 ]; then
-                echo "test_push () { bash $HOME/.monday/test/push.sh \$@ ; }" >> .bash_profile
-                echo "test_pull () { bash $HOME/.monday/test/pull.sh \$@ ; }" >> .bash_profile
-            fi
-            source .bash_profile
+        if [ $test_switch -eq 1 ]; then
+            echo "test_push () { bash $HOME/.monday/test/push.sh \$@ ; }" >> .bashrc
+            echo "test_pull () { bash $HOME/.monday/test/pull.sh \$@ ; }" >> .bashrc
         fi
+
+        source .bashrc
+    elif [ -f .bash_profile ]; then
+        echo "" >> .bash_profile
+        echo "push () { bash $HOME/.monday/scripts/push.sh \$@ ; }" >> .bash_profile
+        echo "pull () { bash $HOME/.monday/scripts/pull.sh \$@ ; }" >> .bash_profile
+
+        if [ $test_switch -eq 1 ]; then
+            echo "test_push () { bash $HOME/.monday/test/push.sh \$@ ; }" >> .bash_profile
+            echo "test_pull () { bash $HOME/.monday/test/pull.sh \$@ ; }" >> .bash_profile
+        fi
+        source .bash_profile
     else
-        echo "Sorry the shell you are using is not supported..."
-        exit
+        echo "Please make sure that you are using the bash shell..."
     fi
 fi
+
+chmod 644 $current_directory/*
+exit
 # Useful URL's:
 #   - https://stackoverflow.com/questions/37876778/escape-dollar-sign-in-string-by-shell-script
 #   - https://askubuntu.com/questions/521937/write-function-in-one-line-into-bashrc

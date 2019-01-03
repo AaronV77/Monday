@@ -1,0 +1,57 @@
+Author: Aaron Anthony Valoroso
+Date: December 17th, 2018
+License: GNU GENERAL PUBLIC LICENSE
+Email: valoroso99@gmail.com
+
+Push Script: Needs one argument in order to store on the remote server. This additional
+argument can be a file or directory.
+
+Pull Script: Needs one argument in order to pull from the remote server. This additional
+argument can be a file or directory.
+
+Push and Pull Arguments:
+
+    -error: Takes no additional arguments and will make sure to output additional
+    lines of output to assist in debugging.
+
+    -storage: Takes one additional argument. The argument is the location to be used
+    on the server to store or pull from. You will not have to worry about including
+    the home directory, just put anything from the home directory.
+
+    -remote: Takes one additionalargument. The argument is the head name contained 
+    within the .locations file. The scripts will uppercase the additional argument
+    and all head names contained in the .locations file should be uppercase.
+
+
+Test Script: This is used to run the pull and push script. This will ensure that they
+are working correctly. Please make sure to run the test in the following way:
+source ./test.sh
+
+Test Arguments:
+
+    -push: Takes no additional arguments and will make sure to run only the push
+    script tests.
+
+    -pull: Takes no additional arguments and will make sure to run only the pull
+    script tests.
+
+    -storage: Takes one additional argument. The argument is the location to be used
+    on the server to store or pull from. You will not have to worry about including
+    the home directory, just put anything from the home directory.
+
+    -remote: Takes one additionalargument. The argument is the head name contained 
+    within the .locations file. The scripts will uppercase the additional argument
+    and all head names contained in the .locations file should be uppercase.
+
+Setup Script: This is used to setup the client and server for this package. 
+
+Setup Arguments:
+
+    -client: Takes no additional arguments and will only setup the client computer 
+    for this package.
+
+    -server: Takes no additional arguments and will only setup the server computer 
+    for this package.
+
+    -test: Takes no additional arguments and will setup the development directory
+    for this package. This is located in .monday/test.

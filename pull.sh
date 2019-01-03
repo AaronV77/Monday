@@ -6,6 +6,8 @@
 #License: GNU GENERAL PUBLIC LICENSE
 #Email: valoroso99@gmail.com
 #--------------------------------------------------------------------
+# This function is used to clean up wherever the script is at. This function can be
+# - ran when a command fails or when the user does a control c and etc.
 cleanup () {
     if [ -f error_output.txt ]; then
         echo -e "\tHere is what caused the error: "
@@ -24,14 +26,47 @@ cleanup () {
 }
 trap cleanup 1 2 3 6
 #--------------------------------------------------------------------
+# This function is used to pull the information from the .locations file in order
+# - setup the ssh calls. How this function works is by locating the file line number
+# - of the head name of the ip_address and username. Then grab the next two lines and
+# - pull the credentials that we will need. Once you grab the line, cut everything before
+# - the equal sign and save.
+credentials () {
+    if [ -f $HOME/.monday/.locations ]; then
+        line=$(grep -n "$1" $HOME/.monday/.locations | cut -d : -f 1)
+        if [ ! -z "$line" ] || [ "$line" != "" ]; then
+            line=$((line+1))
+            username2=$(sed -n $line'p' $HOME/.monday/.locations | awk -F'=' '{print $2}')
+            if [ -z "$username2" ] || [ "$username2" == "" ]; then
+                echo "There was an issue with getting the username that you requested..."
+                exit
+            else
+                username=$username2
+            fi
+        
+            line=$((line+1))
+            ip_address2=$(sed -n $line'p' $HOME/.monday/.locations | awk -F'=' '{print $2}')
+            if [ -z "$ip_address2" ] || [ "$ip_address2" == "" ]; then
+                echo "There was an issue with getting the password that you requested..."
+                exit
+            else
+                ip_address=$ip_address2
+            fi
+        fi
+    fi
+}
+#--------------------------------------------------------------------
 incoming_items=()
 error_switch=0
 current_directory=$(pwd)
-ip_address=None
+ip_address=""
 username=""
 storage_location="Documents/storage"
 compression="tar -czf"
 decompression="tar -xzf"
+
+# Get the credentails from the file.
+credentials "DEFAULT"
 #--------------------------------------------------------------------
 # Check the incoming parameters such as items to pull from the server or
 # - the error switch. The error switch will help provide extra output from
@@ -42,11 +77,22 @@ decompression="tar -xzf"
 # - beginning forward slash. The beginning slash needs to be there (so added) 
 # - and the last forward slash (removed) does not need to be there. It
 # - will be added to the array.
-while test $# -gt 0; do
+while [ $# -gt 0 ];
+do
     if [ "$1" == "-error" ]; then
         error_switch=1
         compression="tar -czvf"
         decompression="tar -xzvf"
+    elif [ "$1" == "-storage" ]; then
+        shift
+        storage_location="$1"
+    elif [ "$1" == "-remote" ]; then
+        shift
+        incoming_argument=$(echo $1 | awk '{print toupper($0)}')
+        credentials $incoming_argument
+    elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+        cat $HOME/.monday/usage | more
+        exit
     else
         argument=$1
         if [ ! -z "$argument" ] || [ "$argument" != "" ]; then
@@ -80,6 +126,13 @@ if ! [ -d $HOME/Transfer ]; then
     if ! mkdir $HOME/Transfer 2> error_output.txt ; then cleanup; fi 
 fi
 if ! cd $HOME/Transfer 2> error_output.txt ; then cleanup; fi 
+
+# Make sure that there are arguments to process and pass along.
+if [ ${#incoming_items[*]} == 0 ]; then
+    echo "There were zero arguments passed to the script..."
+    echo "Exiting..."
+    exit
+fi
 
 for argument in "${incoming_items[@]}"
 do
@@ -271,6 +324,7 @@ fi
 if [ -f error_output.txt ]; then
     rm error_output.txt
 fi
+exit
 
 # Useful URL's:
 #   - https://www.digitalocean.com/community/tutorials/how-to-use-sftp-to-securely-transfer-files-with-a-remote-server
