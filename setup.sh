@@ -6,6 +6,11 @@
 #License: GNU GENERAL PUBLIC LICENSE
 #Email: valoroso99@gmail.com
 #--------------------------------------------------------------------*/
+# This function will cleanup anything that the script has executed and format
+# - the output of any possible errors. I have a variable inside the major script
+# - that will be stored into an array to loop through and make sure to clenaup
+# - at any point within the script. It is my attempt at trying to be able to 
+# - cleanup at any given point.
 cleanup () {
     if [ -f error_output.txt ]; then
         echo -e "\tHere is what caused the error: "
@@ -40,6 +45,11 @@ cleanup () {
 }
 trap cleanup 1 2 3 6
 #--------------------------------------------------------------------
+# This function is used to remove the aliases within the .bashrc or .bash_profile. The 
+# - file in which is avaliable is passed to the function, then we loop through the
+# - array. The order is specific because the test aliases have the same part as the non-
+# - test aliases. I search for the name of the alias in the file, get the line, then delete
+# - the line if the line number is not empty or NULL.
 alias_clear () {
     the_array=( "test_push" "test_pull" "push" "pull" )
     for b_alias in "${the_array[@]}"
