@@ -76,7 +76,6 @@ credentials "DEFAULT"
 # - The beginning slash needs to be there (so added) and the last forward slash 
 # - (removed) does not need to be there. It will be added to the array.
 while [ $# -gt 0 ]; do
-    echo "Looking at: $1"
     if [ "$1" == "-error" ]; then
         error_switch=1
         compression="tar -czvf"
@@ -112,8 +111,6 @@ while [ $# -gt 0 ]; do
     fi
     shift
 done
-
-echo "Storage Location: $storage_location"
 
 # Make sure that there are arguments to process and pass along.
 if [ ${#incoming_items[*]} == 0 ]; then
@@ -245,7 +242,7 @@ do
                 array=(\$(find \$temp -name "\$argument"))
                 len=\${#array[*]}
                 if [ \$len == 1 ]; then
-                    echo "Replacing File / Directory to collection-1..."
+                    echo "Replacing File / Directory to collection-1: \${array[0]}..."
                     if [ -f "\$argument" ]; then
                         if ! rm "\$argument" 2> error_output.txt ; then cleanup2; fi
                     elif [ -d "\$argument" ]; then
