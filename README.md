@@ -12,19 +12,22 @@ Just follow the upcoming sections they should make startup very clear.
 
 ## Warnings
 
-Since these are bash scripts, please make sure to always check any scripts that you are going to run on your system! Also every machine is setup differently and I would hate for these scripts to overwrite any precious keys or any other information. So please, make sure to understand how these scripts are working and what they are doing. There is enough documentation in the files to make the learning transition faster. Lastly, I have not fully tested the setup.sh script to make sure that it works as expected, and so use this file with hesitation.
+Since these are bash scripts, please make sure to always check any scripts that you are going to run on your system! Also every machine is setup differently and I would hate for these scripts to overwrite any precious keys or any other information. So please, make sure to understand how these scripts are working and what they are doing. There is enough documentation in the files to make the learning transition faster.
 
 ## Prerequisites
 
-The only prerequisites is that you need to use the Bash shell on your system in order to be able to call the scripts from any where. I have not supported the other shells yet and have only gotten this package to work with Bash. Lastly, your clients and server have to be some type of Linux Distro and they do not have to be of the same distro.
+The only prerequisites is that you need to use the Bash shell on your system in order to be able to use the scripts. I have not supported the other shells yet and have only gotten this package to work with Bash. Lastly, your clients and server have to be some type of Linux Distro and they do not have to be of the same distro.
 
 ## Installing
 
-Just run the setup.sh script in the directory. I have not tested this script fully, so please just follow the commands by hand. Once that last step is done you can then use the commands push and pull with an argument.
+Just run the setup.sh script in the package directory. There will be stuff that you have to do manually on your server for this package to work as anticipated and thats just editing the ssh config file. Just follow the setup.sh prompt. If you would like to develop the code then run the setup script like so: ./setup.sh -develop. This will setup a directory in your home directory called .monday and you should be able to see where everything is at from there.
 
 ## Testing
 
 There is a test script included into the source for checking if your installation is working or if any changes that you have implemented are working. You will have to run it in the following manner: "source ./test.sh". Now I don't know if every shell supports the command "source" so again these scripts will only work in bash as of right now. Add more tests if you see anything that I am missing.
+
+## Help
+Every script that you are able to run in this package has a -h or --help feature that will give you a usage that should be more helpful with all the avalable arguments that eah script can take.
 
 ## Contributing
 

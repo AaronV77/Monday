@@ -6,6 +6,8 @@
 #License: GNU GENERAL PUBLIC LICENSE
 #Email: valoroso99@gmail.com
 #--------------------------------------------------------------------*/
+# This function is used to clean up wherever the script is at. This function can be
+# - ran when a command fails or when the user does a control c and etc.
 cleanup () {
     if [ -f error_output.txt ]; then
         echo -e "\tHere is what caused the error: "
@@ -21,31 +23,73 @@ cleanup () {
 }
 trap cleanup 1 2 3 6
 #--------------------------------------------------------------------
+# This function is used to pull the information from the .locations file in order
+# - setup the ssh calls. How this function works is by locating the file line number
+# - of the head name of the ip_address and username. Then grab the next two lines and
+# - pull the credentials that we will need. Once you grab the line, cut everything before
+# - the equal sign and save.
+credentials () {
+    if [ -f $HOME/.monday/.locations ]; then
+        line=$(grep -n "$1" $HOME/.monday/.locations | cut -d : -f 1)
+        if [ ! -z "$line" ] || [ "$line" != "" ]; then
+            line=$((line+1))
+            username2=$(sed -n $line'p' $HOME/.monday/.locations | awk -F'=' '{print $2}')
+            if [ -z "$username2" ] || [ "$username2" == "" ]; then
+                echo "There was an issue with getting the username that you requested..."
+                exit
+            else
+                username=$username2
+            fi
+        
+            line=$((line+1))
+            ip_address2=$(sed -n $line'p' $HOME/.monday/.locations | awk -F'=' '{print $2}')
+            if [ -z "$ip_address2" ] || [ "$ip_address2" == "" ]; then
+                echo "There was an issue with getting the password that you requested..."
+                exit
+            else
+                ip_address=$ip_address2
+            fi
+        fi
+    fi
+}
+#--------------------------------------------------------------------
 incoming_items=()
 error_switch=0
 current_directory=$(pwd)
-ip_address=None
+ip_address=""
 username=""
 storage_location="Documents/storage"
 compression="tar -czf"
 decompression="tar -xzf"
 top_directory=""
 item_type=""
+
+# Get the credentails from the file.
+credentials "DEFAULT"
 #--------------------------------------------------------------------
-# Check the incoming parameters such as items to pull from the server or
-# - the error switch. The error switch will help provide extra output from
-# - the compression and decompression of the items. Everything besides the 
-# - error switch is going to be checked for emptiness and NULL. The error
-# - switch is the only parameter that should have '-' in front of it, every
-# - thing else will be ignored. Then lastly, I check for the ending and
-# - beginning forward slash. The beginning slash needs to be there (so added) 
-# - and the last forward slash (removed) does not need to be there. It
-# - will be added to the array.
-while test $# -gt 0; do
-    if [ "$1" = "-error" ]; then
+# The following section of code will check the following arguments that are 
+# - passed to the following script. There are a total of four different arguments
+# - that can be passed to this script. Please just type the alias name "push" or
+# - "pull" then "-h" or "--h" to get more information about the possible arguments
+# - that can be passed. For everything else that is passed in we will want to
+# - check the validity, then I check for the ending and beginning forward slash. 
+# - The beginning slash needs to be there (so added) and the last forward slash 
+# - (removed) does not need to be there. It will be added to the array.
+while [ $# -gt 0 ]; do
+    if [ "$1" == "-error" ]; then
         error_switch=1
         compression="tar -czvf"
         decompression="tar -xzvf"
+    elif [ "$1" == "-storage" ]; then
+        shift
+        storage_location="$1"
+    elif [ "$1" == "-remote" ]; then
+        shift
+        incoming_argument=$(echo $1 | awk '{print toupper($0)}')
+        credentials $incoming_argument
+    elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+        cat $HOME/.monday/usage | more
+        exit
     else
         argument=$1
         if [ ! -z "$argument" ] || [ "$argument" != "" ]; then
@@ -70,6 +114,13 @@ while test $# -gt 0; do
     fi
     shift
 done
+
+# Make sure that there are arguments to process and pass along.
+if [ ${#incoming_items[*]} == 0 ]; then
+    echo "There were zero arguments passed to the script..."
+    echo "Exiting..."
+    exit
+fi
 
 for argument in "${incoming_items[@]}"
 do
@@ -144,6 +195,12 @@ do
             exit
         }
         trap cleanup 1 2 3 6
+
+        if [ ! -d \$HOME/$storage_location ]; then
+            echo "There was a problem with your storage location..." > error_output.txt
+            cleanup2
+        fi
+
         if ! cd \$HOME/Transfer 2> \$HOME/Transfer/error_output.txt ; then cleanup2; fi
         if ! $decompression transfer.tar.gz -m 2> error_output.txt ; then cleanup2; fi
         if ! rm transfer.tar.gz 2> error_output.txt ; then cleanup2; fi
@@ -169,11 +226,11 @@ do
         else
             array=(\$(find \$HOME/$storage_location -name "\$argument"))
         fi
-
+        
         len=\${#array[*]}
         if [ \$len == 0 ]; then
             echo "Adding File / Directory to collection-1..."
-            if ! mv \$argument \$HOME/Documents/storage 2> error_output.txt ; then cleanup2; fi
+            if ! mv \$argument \$HOME/$storage_location 2> error_output.txt ; then cleanup2; fi
             if [ -f error_output.txt ]; then rm error_output.txt; fi
         elif [ \$len -ge 2 ]; then
             array=(\$(find \$HOME/$storage_location -type d -name "$top_directory"))
@@ -242,6 +299,7 @@ EOSSH
 done
 
 echo "--------------------"
+exit
 
 # Useful URL's:
 #   - https://www.tutorialspoint.com/unix/unix-basic-operators.htm
