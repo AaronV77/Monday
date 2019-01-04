@@ -7,6 +7,13 @@
 #Email: valoroso99@gmail.com
 #--------------------------------------------------------------------*/
 cleanup () {
+    if [ -f error_output.txt ]; then
+        echo -e "\tHere is what caused the error: "
+        sed -i 's/^/\t/' error_output.txt
+        sed -i 's/^/\t/' error_output.txt
+        cat error_output.txt
+        rm error_output.txt
+    fi
     for option in ${progression[@]}
     do
         if [ $progression -eq 1 ]; then
@@ -80,23 +87,23 @@ fi
 if [ $server_switch -eq 1 ]; then
     # Setup the ssh keys 
     if [ ! -d $HOME/.ssh ]; then
-        if ! mkdir $HOME/.ssh; then cleanup; fi
-        if ! mkdir $HOME/.ssh/sockets; then cleanup; fi
+        if ! mkdir $HOME/.ssh 2> error_output.txt ; then cleanup; fi
+        if ! mkdir $HOME/.ssh/sockets 2> error_output.txt ; then cleanup; fi
         progression+=(1)
     elif [ ! -d $HOME/.ssh/sockets ]; then
-        if ! mkdir $HOME/.ssh/sockets; then cleanup; fi
+        if ! mkdir $HOME/.ssh/sockets 2> error_output.txt ; then cleanup; fi
         progression+=(2)
     fi
 
-    if ! cd $HOME/.ssh; then cleanup; fi
+    if ! cd $HOME/.ssh 2> error_output.txt ; then cleanup; fi
 
-    if ! ssh-keygen -t rsa; then cleanup; fi
-    if ! mv id_rsa monday_server_id_rsa; then cleanup; fi
-    if ! mv id_rsa.pub monday_server_id_rsa.pub; then cleanup; fi
+    if ! ssh-keygen -t rsa 2> error_output.txt ; then cleanup; fi
+    if ! mv id_rsa monday_server_id_rsa 2> error_output.txt ; then cleanup; fi
+    if ! mv id_rsa.pub monday_server_id_rsa.pub 2> error_output.txt ; then cleanup; fi
     
     progression+=(3)
 
-    if ! cp config backup_config; then cleanup; fi
+    if ! cp config backup_config 2> error_output.txt ; then cleanup; fi
 
     echo -e "\nHost *\n    ControlMaster auto\n    ControlPath  ~/.ssh/sockets/%r@%h-%p\n    ControlPersist 20" >> config
 
@@ -136,13 +143,13 @@ EOSSH
         rm backup_config
     fi
 
-    if ! cd $current_directory; then cleanup; fi
+    if ! cd $current_directory 2> error_output.txt ; then cleanup; fi
 fi
 
 if [ $client_switch -eq 1 ]; then
 
     script_directory=$(pwd)
-    if ! cd $HOME; then cleanup; fi
+    if ! cd $HOME 2> error_output.txt ; then cleanup; fi
 
     if [ -f .bashrc ]; then
         alias_clear .bashrc
@@ -151,28 +158,28 @@ if [ $client_switch -eq 1 ]; then
     fi
 
     if [ ! -d .monday ]; then
-        if ! mkdir .monday; then cleanup; fi
+        if ! mkdir .monday 2> error_output.txt ; then cleanup; fi
     fi
    
     if [ ! -d .monday/scripts ]; then
-        if ! mkdir .monday/scripts; then cleanup; fi
+        if ! mkdir .monday/scripts 2> error_output.txt ; then cleanup; fi
     fi
 
     if [ ! -f .monday/.locations ]; then
-        if ! cp $script_directory/.locations .monday/; then cleanup; fi
+        if ! cp $script_directory/.locations .monday/ 2> error_output.txt ; then cleanup; fi
     fi
     
-    if ! cp $script_directory/usage .monday/; then cleanup; fi
-    if ! cp $script_directory/push.sh .monday/scripts/; then cleanup; fi
-    if ! cp $script_directory/pull.sh .monday/scripts/; then cleanup; fi
+    if ! cp $script_directory/usage .monday/ 2> error_output.txt ; then cleanup; fi
+    if ! cp $script_directory/push.sh .monday/scripts/ 2> error_output.txt ; then cleanup; fi
+    if ! cp $script_directory/pull.sh .monday/scripts/ 2> error_output.txt ; then cleanup; fi
 
     if [ $test_switch -eq 1 ]; then
         if [ ! -d .monday/test ]; then
-            if ! mkdir .monday/test; then cleanup; fi
+            if ! mkdir .monday/test 2> error_output.txt ; then cleanup; fi
         fi
-        if ! cp $script_directory/push.sh .monday/test/; then cleanup; fi
-        if ! cp $script_directory/pull.sh .monday/test/; then cleanup; fi
-        if ! cp $script_directory/test.sh .monday/test/; then cleanup; fi
+        if ! cp $script_directory/push.sh .monday/test/ 2> error_output.txt ; then cleanup; fi
+        if ! cp $script_directory/pull.sh .monday/test/ 2> error_output.txt ; then cleanup; fi
+        if ! cp $script_directory/test.sh .monday/test/ 2> error_output.txt ; then cleanup; fi
     fi
 
     if [ -f .bashrc ]; then
