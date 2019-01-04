@@ -84,7 +84,10 @@ do
         decompression="tar -xzvf"
     elif [ "$1" == "-storage" ]; then
         shift
-        storage_location="$1"
+        store=$1
+        if [ "${store:0:1}" == '/' ]; then store="${store:1}"; fi
+        if [ "${store: -1}" == '/' ]; then store="${store::-1}"; fi
+        storage_location=$store
     elif [ "$1" == "-remote" ]; then
         shift
         incoming_argument=$(echo $1 | awk '{print toupper($0)}')
@@ -99,14 +102,8 @@ do
                 echo "There was a problem with the following argument: $argument"
                 echo "Moving forward."
             else
-                if [ "${argument:0:1}" = '/' ]; then
-                    argument="${argument:1}"
-                fi
-
-                if [ "${argument: -1}" = '/' ]; then
-                    argument=${argument::-1}
-                fi
-
+                if [ "${argument:0:1}" == '/' ]; then argument="${argument:1}"; fi
+                if [ "${argument: -1}" == '/' ]; then argument="${argument::-1}"; fi
                 incoming_items+=("$argument")
             fi
         else

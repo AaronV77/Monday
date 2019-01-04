@@ -129,7 +129,10 @@ while [ $# -gt 0 ]; do
         pull_switch=1
     elif [ "$1" == "-storage" ]; then
         shift
-        storage_location="$1"
+        store=$1
+        if [ "${store:0:1}" == '/' ]; then store="${store:1}"; fi
+        if [ "${store: -1}" == '/' ]; then store="${store::-1}"; fi
+        storage_location=$store
     elif [ "$1" == "-remote" ]; then
         shift
         remote_dest=$(echo $1 | awk '{print toupper($0)}')
