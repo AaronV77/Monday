@@ -15,8 +15,18 @@ Push and Pull Arguments:
     lines of output to assist in debugging.
 
     -storage: Takes one additional argument. The argument is the location to be used
-    on the server to store or pull from. You will not have to worry about including
-    the home directory, just put anything from the home directory.
+    on the server to store or pull from. There is one hitch to this concept. For the
+    push scsript, if there is no occurence of the item you are storing, then the item
+    will be stored in the base directory of the storage location. If there is one
+    occurence of the item that you are storing on the server and the storage location is 
+    in the absolute path of where your item is, then that item will get updated. The
+    item will not be put into the base directory of the storage location that you
+    specify. The same concept will go for the pull script but just retrieving the item,
+    instead of storing. The reason is due to the recursive find in the scripts. This is
+    a major feature because of not allowing multiple of the same items to be store on
+    in the storage loacation. In order to store in a completely different location, you
+    will have to specify a location that is based off your home directory and then a
+    different directory, like the following: /home/user/Desktop or /home/user/Documents.
 
     -remote: Takes one additionalargument. The argument is the head name contained 
     within the .locations file. The scripts will uppercase the additional argument

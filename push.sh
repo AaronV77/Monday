@@ -76,13 +76,17 @@ credentials "DEFAULT"
 # - The beginning slash needs to be there (so added) and the last forward slash 
 # - (removed) does not need to be there. It will be added to the array.
 while [ $# -gt 0 ]; do
+    echo "Looking at: $1"
     if [ "$1" == "-error" ]; then
         error_switch=1
         compression="tar -czvf"
         decompression="tar -xzvf"
     elif [ "$1" == "-storage" ]; then
         shift
-        storage_location="$1"
+        store=$1
+        if [ "${store:0:1}" == '/' ]; then store="${store:1}"; fi
+        if [ "${store: -1}" == '/' ]; then store="${store::-1}"; fi
+        storage_location=$store
     elif [ "$1" == "-remote" ]; then
         shift
         incoming_argument=$(echo $1 | awk '{print toupper($0)}')
@@ -97,14 +101,8 @@ while [ $# -gt 0 ]; do
                 echo "There was a problem with the following argument: $argument"
                 echo "Moving forward."
             else
-                if [ "${argument:0:1}" = '/' ]; then
-                    argument="${argument:1}"
-                fi
-
-                if [ "${argument: -1}" = '/' ]; then
-                    argument=${argument::-1}
-                fi
-
+                if [ "${argument:0:1}" == '/' ]; then argument="${argument:1}"; fi
+                if [ "${argument: -1}" == '/' ]; then argument="${argument::-1}"; fi
                 incoming_items+=("$argument")
             fi
         else
@@ -114,6 +112,8 @@ while [ $# -gt 0 ]; do
     fi
     shift
 done
+
+echo "Storage Location: $storage_location"
 
 # Make sure that there are arguments to process and pass along.
 if [ ${#incoming_items[*]} == 0 ]; then
@@ -259,7 +259,7 @@ do
                 fi
             fi
         elif [ \$len -eq 1 ]; then
-            echo "Replacing File / Directory to collection-2..."
+            echo "Replacing File / Directory to collection-2: \${array[0]}..."
 
             absolute_path=$(echo \${array[0]} | sed 's|\(.*\)/.*|\1|')
             if [ -d \${array[0]} ]; then
