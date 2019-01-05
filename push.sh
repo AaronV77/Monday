@@ -91,7 +91,7 @@ while [ $# -gt 0 ]; do
         incoming_argument=$(echo $1 | awk '{print toupper($0)}')
         credentials $incoming_argument
     elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-        cat $HOME/.monday/usage | more
+        cat $HOME/.monday/.usage | more
         exit
     else
         argument=$1
@@ -129,12 +129,10 @@ do
     top_directory=$(pwd | sed 's|.*/||')
     cd $current_directory
 
-    if [ -f "$current_directory/$argument" ]; then
-        item_type="file"
-    elif [ -d "$current_directory/$argument" ]; then
+    if [ -d "$current_directory/$argument" ]; then
         item_type="dir"
     else
-        item_type="random"
+        item_type="file"
     fi
 
     # Concatenate the current working directory with the incoming argument to 

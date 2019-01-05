@@ -93,7 +93,7 @@ do
         incoming_argument=$(echo $1 | awk '{print toupper($0)}')
         credentials $incoming_argument
     elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-        cat $HOME/.monday/usage | more
+        cat $HOME/.monday/.usage | more
         exit
     else
         argument=$1

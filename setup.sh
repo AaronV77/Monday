@@ -179,7 +179,7 @@ if [ $client_switch -eq 1 ]; then
         if ! cp $script_directory/.locations .monday/ 2> error_output.txt ; then cleanup; fi
     fi
     
-    if ! cp $script_directory/usage .monday/ 2> error_output.txt ; then cleanup; fi
+    if ! cp $script_directory/.usage .monday/ 2> error_output.txt ; then cleanup; fi
     if ! cp $script_directory/push.sh .monday/scripts/ 2> error_output.txt ; then cleanup; fi
     if ! cp $script_directory/pull.sh .monday/scripts/ 2> error_output.txt ; then cleanup; fi
 
