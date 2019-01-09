@@ -167,15 +167,15 @@ if [ $client_switch -eq 1 ]; then
         alias_clear .bash_profile
     fi
 
-    if [ ! -d .monday ]; then
+    if [ ! -d $HOME/.monday ]; then
         if ! mkdir .monday 2> error_output.txt ; then cleanup; fi
     fi
    
-    if [ ! -d .monday/scripts ]; then
+    if [ ! -d $HOME/.monday/scripts ]; then
         if ! mkdir .monday/scripts 2> error_output.txt ; then cleanup; fi
     fi
 
-    if [ ! -f .monday/.locations ]; then
+    if [ ! -f $HOME/.monday/.locations ]; then
         if ! cp $script_directory/.locations .monday/ 2> error_output.txt ; then cleanup; fi
     fi
     

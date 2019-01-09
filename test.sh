@@ -110,6 +110,7 @@ pull_switch=0
 push_switch=0
 current_directory=$(pwd)
 error_status=0
+remote_dest=DEFAULT
 
 # Get the credentails from the file.
 credentials "DEFAULT"
