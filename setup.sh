@@ -113,12 +113,20 @@ if [ $server_switch -eq 1 ]; then
     
     progression+=(3)
 
-    if ! cp config backup_config 2> error_output.txt ; then cleanup; fi
-
-    echo -e "\nHost *\n    ControlMaster auto\n    ControlPath  ~/.ssh/sockets/%r@%h-%p\n    ControlPersist 20" >> config
-
-    echo -e "\nHost $ip_address\n    IdentityFile ~/.ssh/monday_server_id_rsa.pub" >> config
-
+    occurences=$(grep -o 'Host '$ip_address $HOME/.ssh/config | wc -l)
+    if [ $occurences -eq 0 ]; then
+        echo -e "\nHost $ip_address\n    IdentityFile ~/.ssh/monday_server_id_rsa.pub" >> config
+    else
+        echo -e "ERROR: There was a Host in your config file already that was using this IP: $ip_address."
+    fi
+    
+    occurences=$(grep -o 'Host *' $HOME/.ssh/config | wc -l)
+    if [ $occurences -eq 0 ]; then
+        echo -e "\nHost *\n    ControlMaster auto\n    ControlPath  ~/.ssh/sockets/%r@%h-%p\n    ControlPersist 20" >> config
+    else
+        echo -e "ERROR: There was a Host in your config file already that was just *."
+    fi
+    
     progression+=(4)
 
     key=$(cat monday_server_id_rsa.pub)
@@ -148,10 +156,6 @@ if [ $server_switch -eq 1 ]; then
 EOSSH
 
     progression+=(5)
-
-    if [ -f backup_config ]; then
-        rm backup_config
-    fi
 
     if ! cd $current_directory 2> error_output.txt ; then cleanup; fi
 fi
