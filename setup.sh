@@ -182,7 +182,7 @@ if [ $client_switch -eq 1 ]; then
     if [ ! -f $HOME/.monday/.locations ]; then
         if ! cp $script_directory/.locations .monday/ 2> error_output.txt ; then cleanup; fi
     fi
-    
+
     if ! cp $script_directory/.usage .monday/ 2> error_output.txt ; then cleanup; fi
     if ! cp $script_directory/push.sh .monday/scripts/ 2> error_output.txt ; then cleanup; fi
     if ! cp $script_directory/pull.sh .monday/scripts/ 2> error_output.txt ; then cleanup; fi
@@ -222,6 +222,10 @@ fi
 
 if [ -f error_output.txt ]; then
     rm error_output.txt
+fi
+
+if [ -f $script_directory/error_output.txt ]; then
+    rm $script_directory/error_output.txt
 fi
 
 chmod 644 $current_directory/*
