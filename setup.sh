@@ -216,6 +216,10 @@ if [ $client_switch -eq 1 ]; then
     fi
 fi
 
+if [ -f error_output.txt ]; then
+    rm error_output.txt
+fi
+
 chmod 644 $current_directory/*
 exit
 # Useful URL's:
