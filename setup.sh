@@ -116,11 +116,15 @@ if [ $server_switch -eq 1 ]; then
     occurences=$(grep -o 'Host '$ip_address $HOME/.ssh/config | wc -l)
     if [ $occurences -eq 0 ]; then
         echo -e "\nHost $ip_address\n    IdentityFile ~/.ssh/monday_server_id_rsa.pub" >> config
+    else
+        echo -e "ERROR: There was a Host in your config file already that was using this IP: $ip_address."
     fi
     
     occurences=$(grep -o 'Host *' $HOME/.ssh/config | wc -l)
     if [ $occurences -eq 0 ]; then
         echo -e "\nHost *\n    ControlMaster auto\n    ControlPath  ~/.ssh/sockets/%r@%h-%p\n    ControlPersist 20" >> config
+    else
+        echo -e "ERROR: There was a Host in your config file already that was just *."
     fi
     
     progression+=(4)
