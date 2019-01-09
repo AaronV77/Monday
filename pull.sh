@@ -2,7 +2,7 @@
 
 #--------------------------------------------------------------------
 #Author: Aaron Anthony Valoroso
-#Date: December 17th, 2018
+#Date: january 2nd, 2019
 #License: GNU GENERAL PUBLIC LICENSE
 #Email: valoroso99@gmail.com
 #--------------------------------------------------------------------
@@ -93,7 +93,7 @@ do
         incoming_argument=$(echo $1 | awk '{print toupper($0)}')
         credentials $incoming_argument
     elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-        cat $HOME/.monday/usage | more
+        cat $HOME/.monday/.usage | more
         exit
     else
         argument=$1

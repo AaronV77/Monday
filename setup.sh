@@ -2,7 +2,7 @@
 
 #/*-------------------------------------------------------------------
 #Author: Aaron Anthony Valoroso
-#Date: November 14th, 2018
+#Date: January 2nd, 2019
 #License: GNU GENERAL PUBLIC LICENSE
 #Email: valoroso99@gmail.com
 #--------------------------------------------------------------------*/
@@ -167,19 +167,19 @@ if [ $client_switch -eq 1 ]; then
         alias_clear .bash_profile
     fi
 
-    if [ ! -d .monday ]; then
+    if [ ! -d $HOME/.monday ]; then
         if ! mkdir .monday 2> error_output.txt ; then cleanup; fi
     fi
    
-    if [ ! -d .monday/scripts ]; then
+    if [ ! -d $HOME/.monday/scripts ]; then
         if ! mkdir .monday/scripts 2> error_output.txt ; then cleanup; fi
     fi
 
-    if [ ! -f .monday/.locations ]; then
+    if [ ! -f $HOME/.monday/.locations ]; then
         if ! cp $script_directory/.locations .monday/ 2> error_output.txt ; then cleanup; fi
     fi
     
-    if ! cp $script_directory/usage .monday/ 2> error_output.txt ; then cleanup; fi
+    if ! cp $script_directory/.usage .monday/ 2> error_output.txt ; then cleanup; fi
     if ! cp $script_directory/push.sh .monday/scripts/ 2> error_output.txt ; then cleanup; fi
     if ! cp $script_directory/pull.sh .monday/scripts/ 2> error_output.txt ; then cleanup; fi
 

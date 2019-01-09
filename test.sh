@@ -2,7 +2,7 @@
 
 #--------------------------------------------------------------------
 #Author: Aaron Anthony Valoroso
-#Date: December 17th, 2018
+#Date: January 2nd, 2019
 #License: GNU GENERAL PUBLIC LICENSE
 #Email: valoroso99@gmail.com
 #--------------------------------------------------------------------
@@ -110,6 +110,7 @@ pull_switch=0
 push_switch=0
 current_directory=$(pwd)
 error_status=0
+remote_dest=DEFAULT
 
 # Get the credentails from the file.
 credentials "DEFAULT"
@@ -138,7 +139,7 @@ while [ $# -gt 0 ]; do
         remote_dest=$(echo $1 | awk '{print toupper($0)}')
         credentials $remote_dest
     elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-        cat $HOME/.monday/usage | more
+        cat $HOME/.monday/.usage | more
         return
 
     fi
