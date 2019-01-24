@@ -1,5 +1,3 @@
-#!/bin/bash
-
 #/*-------------------------------------------------------------------
 #Author: Aaron Anthony Valoroso
 #Date: January 2nd, 2010
@@ -11,8 +9,12 @@
 cleanup () {
     if [ -f error_output.txt ]; then
         echo -e "\tHere is what caused the error: "
-        sed -i 's/^/\t/' error_output.txt
-        sed -i 's/^/\t/' error_output.txt
+        if [ "$(uname -s)" == "Darwin" ]; then
+            sed -i '' 's/^/        /' error_output.txt
+        elif [ "$(uname -s)" == "Linux" ]; then
+            sed -i 's/^/\t/' error_output.txt
+            sed -i 's/^/\t/' error_output.txt
+        fi
         cat error_output.txt
         rm error_output.txt
     fi
@@ -144,7 +146,7 @@ do
     absolute_path="$current_directory/$argument"
     if [ -d $absolute_path ] || [ -f $absolute_path ]; then
 
-        argument_size=$(find $current_directory -name $argument | wc -l)
+        argument_size=$(find $current_directory -name $argument | wc -l | tr -d ' ')
         if ! $compression transfer.tar.gz $argument 2> error_output.txt ; then cleanup; fi
         if ! scp transfer.tar.gz $username@$ip_address:~/Transfer 2> error_output.txt 1> output.txt; then cleanup; fi
         if ! rm transfer.tar.gz 2> error_output.txt ; then cleanup; fi
@@ -152,7 +154,12 @@ do
         if [ -f error_output.txt ]; then rm error_output.txt; fi
 
         if [ -f output.txt ]; then
-            sed -i 's/^/\t/' output.txt
+             if [ "$(uname -s)" == "Darwin" ]; then
+                sed -i '' 's/^/        /' output.txt
+            elif [ "$(uname -s)" == "Linux" ]; then
+                sed -i 's/^/\t/' output.txt
+            fi
+
             if [ $error_switch -eq 1 ]; then
                 cat output.txt
             fi
@@ -207,7 +214,6 @@ do
         
         if [ "\$argument_size_2" != "$argument_size" ]; then
             pwd 1>> error_output.txt
-            find \$HOME/Transfer -name "\$argument" | wc -l 1>> error_output.txt
             echo "Argument-1: $argument_size" 1>> error_output.txt
             echo "Argument-2: \$argument_size_2" 1>> error_output.txt
             echo "Not everything made it over to the darkside." 1>> error_output.txt
@@ -264,9 +270,7 @@ do
             fi
             if ! mv \$argument \$absolute_path 2> error_output.txt ; then cleanup2; fi
         fi
-
         rm -rf \$HOME/Transfer/*
-
         exit
 EOSSH
     # Here we will check to see if the previous code ran into an error. If it did
@@ -277,13 +281,17 @@ EOSSH
     error=$(tail -1 output.txt)
     if [ "$error" == 'Exiting...' ]; then
         echo "Found errors in the heredoc..."
-        head -n -1 output.txt 1> error_output.txt
+        cat output.txt 1> error_output.txt
         if [ -f output.txt ]; then
             rm output.txt
         fi
         cleanup
     else
-        sed -i 's/^/\t/' output.txt
+        if [ "$(uname -s)" == "Darwin" ]; then
+            sed -i '' 's/^/        /' output.txt
+        elif [ "$(uname -s)" == "Linux" ]; then
+            sed -i 's/^/\t/' output.txt
+        fi
         cat output.txt
     fi
 

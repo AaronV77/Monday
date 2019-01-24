@@ -19,7 +19,11 @@
 # - file and makes sure that everything that gets outputed is formated correctly.
 test_failure() {
 
-    sed -i 's/^/\t/' the_output.txt
+    if [ "$(uname -s)" == "Darwin" ]; then
+        sed -i '' 's/^/   /' the_output.txt
+    elif [ "$(uname -s)" == "Linux" ]; then
+        sed -i 's/^/\t/' the_output.txt
+    fi
     cat the_output.txt
     echo -e "\t----------------------------"
     curr_dir=$(pwd)
@@ -27,7 +31,11 @@ test_failure() {
     echo -e "\t----------------------------"
     echo -e "\tCurrent Directory Contents: "
     ls 1> the_output.txt
-    sed -i 's/^/\t/' the_output.txt
+    if [ "$(uname -s)" == "Darwin" ]; then
+        sed -i '' 's/^/   /' the_output.txt
+    elif [ "$(uname -s)" == "Linux" ]; then
+        sed -i 's/^/\t/' the_output.txt
+    fi
     cat the_output.txt        
     echo -e "\t----------------------------"
     rm the_output.txt

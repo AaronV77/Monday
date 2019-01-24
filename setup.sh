@@ -14,8 +14,12 @@
 cleanup () {
     if [ -f error_output.txt ]; then
         echo -e "\tHere is what caused the error: "
-        sed -i 's/^/\t/' error_output.txt
-        sed -i 's/^/\t/' error_output.txt
+        if [ "$(uname -s)" == "Darwin" ]; then
+            sed -i '' 's/^/        /' error_output.txt
+        elif [ "$(uname -s)" == "Linux" ]; then
+            sed -i 's/^/\t/' error_output.txt
+            sed -i 's/^/\t/' error_output.txt
+        fi
         cat error_output.txt
         rm error_output.txt
     fi
@@ -63,6 +67,14 @@ alias_clear () {
     done 
 }
 #--------------------------------------------------------------------
+bash_version=$(echo $BASH_VERSION)
+bash_version=${bash_version:0:3}
+if (( $(echo "$bash_version < 4.2" | bc -l) )); then
+    echo "Your Bash version needs to be newer than 4.2..."
+    echo "If you are using Linux then its a breeze, else if you are using Mac good luck..."
+    exit
+fi
+
 ip_address=None
 username=""
 current_directory=$(pwd)

@@ -11,8 +11,12 @@
 cleanup () {
     if [ -f error_output.txt ]; then
         echo -e "\tHere is what caused the error: "
-        sed -i 's/^/\t/' error_output.txt
-        sed -i 's/^/\t/' error_output.txt
+        if [ "$(uname -s)" == "Darwin" ]; then
+            sed -i '' 's/^/        /' error_output.txt
+        elif [ "$(uname -s)" == "Linux" ]; then
+            sed -i 's/^/\t/' error_output.txt
+            sed -i 's/^/\t/' error_output.txt
+        fi
         cat error_output.txt
         rm error_output.txt
     fi
@@ -239,7 +243,11 @@ EOSSH
 
     if [ $error_switch -eq 1 ]; then
         echo "Decompression output..."
-        sed -i 's/^/\t/' output.txt
+        if [ "$(uname -s)" == "Darwin" ]; then
+            sed -i '' 's/^/   /' output.txt
+        elif [ "$(uname -s)" == "Linux" ]; then
+            sed -i 's/^/\t/' output.txt
+        fi
         cat output.txt
         if [ ! -f output.txt ]; then
             rm output.txt

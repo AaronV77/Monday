@@ -22,6 +22,17 @@ The only prerequisites is that you need to use the Bash shell on your system in 
 
 Just run the setup.sh script in the package directory. There will be stuff that you have to do manually on your server for this package to work as anticipated and thats just editing the ssh config file. Just follow the setup.sh prompt. If you would like to develop the code then run the setup script like so: ./setup.sh -develop. This will setup a directory in your home directory called .monday and you should be able to see where everything is at from there.
 
+## Mac OS Installing
+
+You would think that there should be no problems with having an updated version of Bash on your system and you would be wrong. Here is a list of things that you will have to do in order for getitng these scripts to work on Mac.
+- Install Brew: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+- Install Bash: brew install bash
+- Change the /etc/shells: sudo nano /etc/shells and change the /bin/bash to /usr/local/bin/bash
+- Logout and back in.
+- Then do echo $BASH_VERSION and it should read like 5.0.0, if you do which or bash --version it will keep reading from /bin/bash because of your path. You can update your path if you want to change this.
+- When you install these scripts then you will need to read the .bash_profile and change the bash "script" alias to /usr/local/bin/bash "script" so that it is pointing at the new bash version.
+- Merry Christmas
+
 ## Testing
 
 There is a test script included into the source for checking if your installation is working or if any changes that you have implemented are working. You will have to run it in the following manner: "source ./test.sh". Now I don't know if every shell supports the command "source" so again these scripts will only work in bash as of right now. Add more tests if you see anything that I am missing.
